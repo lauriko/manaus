@@ -1,0 +1,60 @@
+package com.getjenny.manaus
+
+/**
+  * Created by Mario Alemi on 06/04/2017.
+  */
+package object util {
+  val factorial:Map[Int, Double] = Map((0, 1.0), (1, 1.0), (2, 2.0), (3, 6.0), (4, 24.0), (5, 120.0), (6, 720.0), (7, 5040.0)).withDefault(x => x*factorial(x-1))
+  def binomialFactor(n: Int, k: Int): Double = factorial(n)/(factorial(n-k)*factorial(k))
+  def multinomialFactor(n: Int, k: List[Int]): Double = factorial(n)/ k.map(factorial(_)).product
+
+  def b2t(bigram: Set[String]): (String, String) = {
+    assert(bigram.size == 2, "b2t only for bigrams")
+    (bigram.head, bigram.tail.head)
+  }
+  def b2tInv(bigram: Set[String]): (String, String) = {
+    assert(bigram.size == 2, "b2t only for bigrams")
+    (bigram.tail.head, bigram.head)
+  }
+
+  /**
+    * Given the occurrences of two words k1 and k2 in a sample of n bigrams, makes the expected relative frequencies:
+    *
+    * None/n=1-(1-P(1))*(1-P(2)), JustOne/n=P(1)+P(2)-2*P(1)*P(2), Bigram/n=P(1)*P(2)
+    *
+    * @param n
+    * @param k1
+    * @param k2
+    */
+  def expectedTriOccurrence(n: Int, k1: Int, k2: Int): List[Double] = {
+    val p1 = k1*1.0/n
+    val p2 = k2*1.0/n
+    val noWord: Double = n*(1-p1)*(1-p2)
+    val oneWord: Double = n*(p1+p2-2*p1*p2)
+    val bothWords: Double = p1*p2
+    List(noWord, oneWord, bothWords)
+  }
+
+
+  /**
+    * Ad-hoc tokenizer for our (private) test data
+    *
+    * @param line A string with the conversations
+    * @return List with all important words
+    */
+  def tokenizer(line: String): List[String] = {
+    try {
+      val onlyClient = (for (phrase <- line.split(";") if phrase.take(6) != "\"OTHER" && phrase.take(6) != "\"AGENT")
+        yield phrase.split(":")(1)).mkString(" ")
+
+      onlyClient.map(x => if (x.isLetter) x else " ")
+        .reduce(_.toString + _.toString)
+        .toString.split(" ")
+        .toList.filter(_.length > 0)
+    } catch {
+      case e: Exception => List()
+    }
+  }
+
+
+}
