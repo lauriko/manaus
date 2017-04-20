@@ -41,18 +41,23 @@ case class Bags(bags: List[Set[String]]) {
   val orderedBigrams: List[List[String]] = m11.toList.map(_._1.toList.sortBy(-occurrences(_))).filter(_.length == 2)
 
   // Trigrams and associated occurrences
+  //TODO NB filtering out occ < 2)
   val m111: Map[Set[String], Int] =
-    (for (bag <- bags) yield for (w1 <- bag; w2 <- bag; w3 <- bag if w1 < w2 && w2 < w3) yield Set(w1, w2, w3) ).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
+    (for (bag <- bags) yield for (w1 <- bag; w2 <- bag; w3 <- bag if w1 < w2 && w2 < w3)
+      yield Set(w1, w2, w3) ).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0).filter(kv => kv._2 > 2)
 
+  val trigrams: Set[Set[String]] = m111.keys.toSet
+
+  // trigrams.contains(b.union(Set(w)))  because we are only interested in trigrams that exist
   val m110: Map[(String, String, String), Int] =
-    (for (bag <- bags) yield for (w <- bag; b <- m11.keys if b.size == 2 && bag.contains(w) && bag.contains(b.head) &&
-      !bag.contains(b.tail.head) && w != b.head && w != b.tail.head)
-      yield (w, b.head, b.tail.head)).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
+    (for (bag <- bags) yield for (t <- trigrams if t.size == 3 &&
+      bag.contains(t.head) && bag.contains(t.tail.head) &&  !bag.contains(t.tail.tail.head) )
+      yield (t.head, t.tail.head, t.tail.tail.head)).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
 
   val m100: Map[(String, String, String), Int] =
-    (for (bag <- bags) yield for (w <- bag; b <- m11.keys if b.size == 2 && bag.contains(w) && !bag.contains(b.head) &&
-      !bag.contains(b.tail.head) && w != b.head && w != b.tail.head)
-      yield (w, b.head, b.tail.head)).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
+    (for (bag <- bags) yield for (t <- trigrams if t.size == 3 &&
+      bag.contains(t.head) && !bag.contains(t.tail.head) &&  !bag.contains(t.tail.tail.head) )
+      yield (t.head, t.tail.head, t.tail.tail.head)).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
 
   def m000(t: List[String]): Int = {
     bags.length - m111(t.toSet) -
@@ -85,9 +90,11 @@ case class Bags(bags: List[Set[String]]) {
     *
     * This gives an approximated result of binomialSignificativeBigrams
     */
-  val binomialSignificativeBigramsFast: List[(List[String], Double)] = (for (b <- orderedBigrams)
+  val binomialSignificativeBigrams: List[(List[String], Double)] = (for (b <- orderedBigrams)
     yield (b, Binomial(samples=n, successes=occurrences(b.tail.head))
-      .rightSurprise(n=occurrences(b.head), k=m11(b.toSet)))).sortBy(-_._2)
+      .rightSurprise(n=occurrences(b.head), k=m11(b.toSet)))).sortBy(-_._2).filterNot(_._2.isNaN)
+
+  // println(binomialSignificativeBigramsFast.filter(_._2 > 20).mkString("\n") )
 
   /**
     * Here we do the correct thing. Consider the bigram(A, B). Three events:
@@ -98,20 +105,32 @@ case class Bags(bags: List[Set[String]]) {
     * Let's compute the surprise for that number of Bigrams.
     *
     */
-    //TODO think about expectedTriOccurrence(nBigrams, ...) or expectedTriOccurrence(n, ...) ?
-  val binomialSignificativeBigrams: List[(Set[String], Double)] = (for (b <- m11.keys if b.size == 2)
+  val binomialSignificativeBigramsExact: List[(Set[String], Double)] = (for (b <- m11.keys if b.size == 2)
     yield (b, Trinomial(nBigrams, expectedTriOccurrence(nBigrams, occurrences(b.head), occurrences(b.tail.head)))
       .rightSurprise(nBigrams, List(m00(b), m10(b2t(b))+m10(b2tInv(b)), m11(b)) ))).toList.sortBy(-_._2)
 
-  def makeTrigramProbabilities(t: List[String]): List[Int] =
-    List(m100((t.head, t(1), t(2))), m110((t.head, t(1), t(2)))+m110((t.head, t(2), t(1))), m111(t.toSet))
+//  def makeTrigramProbabilities(t: List[String]): List[Int] =
+//    List(m100((t.head, t(1), t(2))), m110((t.head, t(1), t(2)))+m110((t.head, t(2), t(1))), m111(t.toSet))
+//
+//  val usefulTrigrams: Map[List[String], List[Int]] = (for (t <- orderedTrigrams if makeTrigramProbabilities(t).product > 0)
+//    yield (t, makeTrigramProbabilities(t))).toMap
+//
+//  // Not really good. The best would probably be to consider the "bigram" (significativeBigram, word).
+//  val trinomialSignificativeTrigramsFastFirstAttemp: List[(List[String], Double)] = (for (tp <- usefulTrigrams.toList)
+//    yield (tp._1, Trinomial(samples=n, expectedTriOccurrence(nBigrams, occurrences(tp._1(1)), occurrences(tp._1(2))))
+//        .rightSurprise(n=occurrences(tp._1.head), k=tp._2))).sortBy(-_._2)
 
-  val usefulTrigrams: Map[List[String], List[Int]] = (for (t <- orderedTrigrams if makeTrigramProbabilities(t).product > 0)
-    yield (t, makeTrigramProbabilities(t))).toMap
+  val sb: List[Set[String]] = binomialSignificativeBigrams.filter(_._2 > 8).map(_._1.toSet)
+  val bigramWord: List[(Set[String], String)] =  for (b <- sb; t <- trigrams if t.intersect(b) == b) yield (b, t.diff(b).head)
 
-  val trinomialSignificativeTrigramsFast: List[(List[String], Double)] = (for (tp <- usefulTrigrams.toList)
-    yield (tp._1, Trinomial(samples=n, expectedTriOccurrence(nBigrams, occurrences(tp._1(1)), occurrences(tp._1(2))))
-        .rightSurprise(n=occurrences(tp._1.head), k=tp._2))).sortBy(-_._2)
+  // This looks better, but
+  //TODO need to sum now all values corresponding to same key (see polynomial in course)
+  val trinomialSignificativeTrigramsFast: List[(Set[String], Double)] = (for (bw <- bigramWord.take(1000)  if occurrences(bw._2) > m11(bw._1) )
+    yield (bw._1 + bw._2, Binomial(samples=n, successes=m11(bw._1))
+      .rightSurprise(n=occurrences(bw._2), k=m111(bw._1 + bw._2)))).sortBy(-_._2)
+
+
+
 
   // val bags = List(Set("A", "B"), Set("A", "B", "C"), Set("A", "B", "D"), Set("E", "F"), Set("C"), Set("C"), Set("C"), Set("C"))
 }
