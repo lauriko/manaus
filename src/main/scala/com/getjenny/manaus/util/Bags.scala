@@ -123,11 +123,26 @@ case class Bags(bags: List[Set[String]]) {
   val sb: List[Set[String]] = binomialSignificativeBigrams.filter(_._2 > 8).map(_._1.toSet)
   val bigramWord: List[(Set[String], String)] =  for (b <- sb; t <- trigrams if t.intersect(b) == b) yield (b, t.diff(b).head)
 
-  // This looks better, but
+  // This looks better
   //TODO need to sum now all values corresponding to same key (see polynomial in course)
-  val trinomialSignificativeTrigramsFast: List[(Set[String], Double)] = (for (bw <- bigramWord.take(1000)  if occurrences(bw._2) > m11(bw._1) )
-    yield (bw._1 + bw._2, Binomial(samples=n, successes=m11(bw._1))
-      .rightSurprise(n=occurrences(bw._2), k=m111(bw._1 + bw._2)))).sortBy(-_._2)
+  def trinomialSignificativeTrigramsFast(): Map[Set[String], Double] = {
+    def loop(acc: Map[Set[String], Double], bigramWord: List[(Set[String], String)] ): Map[Set[String], Double] = {
+      if (bigramWord.tail.isEmpty) acc
+      else {
+        val k = bigramWord.head._1 + bigramWord.head._2
+        val surprise = Binomial(samples = n, successes = m11(bigramWord.head._1))
+          .rightSurprise(n = occurrences(bigramWord.head._2), k = m111(k))
+        if (!surprise.isNaN) loop(acc = acc.updated(k, acc(k) + surprise), bigramWord = bigramWord.tail)
+        else loop(acc = acc.updated(k, acc(k)), bigramWord = bigramWord.tail)
+      }
+    }
+    loop(acc=Map().withDefaultValue(0.0), bigramWord)
+  }
+
+
+  //  (for (bw <- bigramWord.take(1000)  if occurrences(bw._2) > m11(bw._1) )
+//    yield (bw._1 + bw._2, Binomial(samples=n, successes=m11(bw._1))
+//      .rightSurprise(n=occurrences(bw._2), k=m111(bw._1 + bw._2)))).sortBy(-_._2)
 
 
 

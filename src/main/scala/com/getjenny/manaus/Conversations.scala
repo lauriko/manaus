@@ -86,7 +86,7 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
   // type mismatch
   // found   : String
   // required: <:<[(String, Double),(?, ?)]
-  val ekList = extractedKeywords.toList.sortBy(_._2)
+  private val ekList = extractedKeywords.toList.sortBy(_._2)
   val cutoff: Double = ekList(ekList.length/10)._2
 
   val keywords: List[Set[String]] = for (l <- rawBagOfKeywordsInfo) yield (for (ki <- l if extractedKeywords(ki._1) < cutoff) yield ki._1).toSet
