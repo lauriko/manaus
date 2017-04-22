@@ -1,7 +1,5 @@
 package com.getjenny.manaus.util
 
-import scala.collection.immutable.Set.Set2
-
 /**
   * Given bags of keywords, computes the most significative associations.
   *
@@ -10,16 +8,16 @@ import scala.collection.immutable.Set.Set2
   *
   * Created by Mario Alemi on 12/04/2017 in Jutai, Amazonas, Brazil
   */
-case class Bags(bags: List[Set[String]]) {
+case class Bags(bags: List[(List[String], Set[String])]) {
 
-  val vocabulary: Set[String] = bags.flatten.toSet
+  val vocabulary: Set[String] = bags.flatMap(_._2).toSet
   val n: Int = bags.length
-  val occurrences: Map[String, Int] = bags.flatten.groupBy(x=>x).map(x => (x._1, x._2.length))
+  val occurrences: Map[String, Int] = bags.flatMap(_._2).groupBy(x=>x).map(x => (x._1, x._2.length))
 
   ///A Map Set(Bigram_1, Bigram_2) -> Occurrences of both words Bigram_1 and Bigram_2 in the same bag
   //TODO Inefficient?
   val m11: Map[Set[String], Int] =
-    (for (bag <- bags) yield for (w1 <- bag; w2 <- bag if w1 < w2) yield Set(w1, w2) ).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
+    (for (bag <- bags) yield for (w1 <- bag._2; w2 <- bag._2 if w1 < w2) yield Set(w1, w2) ).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
 
   /**
     * How often the first word appear, and the second word doesn't, in all bags?
@@ -27,7 +25,7 @@ case class Bags(bags: List[Set[String]]) {
     * Of course, m10(a, b) = m01(b, a)
     */
   val m10: Map[(String, String), Int] =
-    (for (bag <- bags) yield for (w1 <- bag; w2 <- vocabulary.diff(bag))
+    (for (bag <- bags) yield for (w1 <- bag._2; w2 <- vocabulary.diff(bag._2))
       yield (w1, w2) ).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
 
   // Map Set(Bigram_1, Bigram_2) -> Occurrences of neither word Bigram_1 nor Bigram_2 in a bag
@@ -43,7 +41,7 @@ case class Bags(bags: List[Set[String]]) {
   // Trigrams and associated occurrences
   //TODO NB filtering out occ < 2)
   val m111: Map[Set[String], Int] =
-    (for (bag <- bags) yield for (w1 <- bag; w2 <- bag; w3 <- bag if w1 < w2 && w2 < w3)
+    (for (bag <- bags) yield for (w1 <- bag._2; w2 <- bag._2; w3 <- bag._2 if w1 < w2 && w2 < w3)
       yield Set(w1, w2, w3) ).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0).filter(kv => kv._2 > 2)
 
   val trigrams: Set[Set[String]] = m111.keys.toSet
@@ -51,12 +49,12 @@ case class Bags(bags: List[Set[String]]) {
   // trigrams.contains(b.union(Set(w)))  because we are only interested in trigrams that exist
   val m110: Map[(String, String, String), Int] =
     (for (bag <- bags) yield for (t <- trigrams if t.size == 3 &&
-      bag.contains(t.head) && bag.contains(t.tail.head) &&  !bag.contains(t.tail.tail.head) )
+      bag._2.contains(t.head) && bag._2.contains(t.tail.head) &&  !bag._2.contains(t.tail.tail.head) )
       yield (t.head, t.tail.head, t.tail.tail.head)).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
 
   val m100: Map[(String, String, String), Int] =
     (for (bag <- bags) yield for (t <- trigrams if t.size == 3 &&
-      bag.contains(t.head) && !bag.contains(t.tail.head) &&  !bag.contains(t.tail.tail.head) )
+      bag._2.contains(t.head) && !bag._2.contains(t.tail.head) &&  !bag._2.contains(t.tail.tail.head) )
       yield (t.head, t.tail.head, t.tail.tail.head)).flatten.groupBy(x=>x).map(x => (x._1, x._2.length)).withDefaultValue(0)
 
   def m000(t: List[String]): Int = {

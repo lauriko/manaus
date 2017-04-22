@@ -16,6 +16,9 @@ object testone {
   val rawConversations = Source.fromFile("/Users/mal/pCloud/Scala/manaus/convs.head5000.csv").getLines.toList
   val conversations = new Conversations(rawConversations=rawConversations, tokenizer=tokenizer,
     priorOccurrences=priorOccurrences, stopwords=stopwords)
+  val bags = conversations.keywords
+
+
   println("Raw Keywords:\n" + conversations.rawBagOfKeywordsInfo.take(100).mkString("\n"))
 
   println("Total Extracted Keywords:\n" + conversations.extractedKeywords.toList.length)
@@ -23,7 +26,7 @@ object testone {
 
   println("Clean Keywords:\n" + conversations.keywords.take(500))
 
-  val g = Bags(conversations.keywords)
+  val g = Bags(bags)
   //val g = LogLikelihoodScore(List(Set("A", "B", "C"), Set("A", "B", "D"), Set("A", "B")))
 
   println("Bigrams:\n" + g.llrSignificativeBigrams)

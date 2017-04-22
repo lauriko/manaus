@@ -37,24 +37,36 @@ package object util {
 
 
   /**
-    * Ad-hoc tokenizer for our (private) test data
+    * Ad-hoc tokenizer for our (private) test data.
     *
-    * @param line A string with the conversations
-    * @return List with all important words
+    * @param line A string with the conversation.
+    * @return List(List("CLIENT", "Hey..."), List("AGENT", "hello..."))
     */
-  def tokenizer(line: String): List[String] = {
+  def tokenizer(line: String): List[(String, List[String])] = {
     try {
-      val onlyClient = (for (phrase <- line.split(";") if phrase.take(6) != "\"OTHER" && phrase.take(6) != "\"AGENT")
-        yield phrase.split(":")(1)).mkString(" ")
+      val splitLine = line.split("\";\"").map(_.trim.replaceAll("\"", ""))
+      def loop(pp: List[List[String]], splitLine: Array[String]): List[List[String]] = {
+        if (splitLine.tail.isEmpty) {
+          if (splitLine.head.trim.take(5) == "OTHER") pp
+          else if (pp.isEmpty) splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ").toList :: pp
+          else if (pp.head.head == "CLIENT" && splitLine.head.take(6) == "CLIENT") List("CLIENT", pp.head(1) + " " + splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ")(1)) :: pp.tail
+          else if (pp.head.head == "AGENT" && splitLine.head.take(5) == "AGENT") List("AGENT", pp.head(1) + " " + splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ")(1)) :: pp.tail
+          else splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ").toList :: pp
+        } else {
+          if (splitLine.head.trim.take(5) == "OTHER") loop(pp, splitLine.tail)
+          else if (pp.isEmpty) loop(splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ").toList :: pp, splitLine.tail)
+          else if (pp.head.head == "CLIENT" && splitLine.head.take(6) == "CLIENT")
+            loop( List("CLIENT", pp.head(1) + " " + splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ")(1)) :: pp.tail, splitLine.tail)
+          else if (pp.head.head == "AGENT" && splitLine.head.take(5) == "AGENT")
+            loop( List("AGENT", pp.head(1) + " " + splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ")(1) ) :: pp.tail, splitLine.tail)
+          else loop(splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ").toList :: pp, splitLine.tail)
+        }
+      }
 
-      onlyClient.map(x => if (x.isLetter) x else " ")
-        .reduce(_.toString + _.toString)
-        .toString.split(" ")
-        .toList.filter(_.length > 0)
+      loop(List(), splitLine ).map(x => List(x.head, """[^a-zA-Z0-9]""".r.replaceAllIn(x(1).replaceAll("'", ""), " ") ) ).map(x => (x.head, x(1).split(" ").toList.filter(_.length > 0) ) )
+
     } catch {
       case e: Exception => List()
     }
   }
-
-
 }

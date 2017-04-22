@@ -20,14 +20,16 @@ import com.getjenny.manaus.util.Binomial
     val priorOccurrences: Map[String, Int] = (for (line <- Source.fromFile(filePath).getLines)
       yield (line.split("\t")(wordColumn).toLowerCase -> line.split("\t")(occurrenceColumn).toInt)).toMap.withDefaultValue(0)
     // instantiate the Conversations
-    val rawConversations = Source.fromFile("/Users/mal/pCloud/Scala/extractor/tieto_convs.head.csv").getLines.toList
-    val conversations = new Conversations(rawConversations, priorOccurrences)
+    val rawConversations = Source.fromFile("/Users/mal/pCloud/Scala/manaus/convs.head.csv").getLines.toList
+    val stopwords=Source.fromFile("en_stopwords.txt").getLines.toSet
+    val conversations = new Conversations(rawConversations=rawConversations, tokenizer=tokenizer,
+      priorOccurrences=priorOccurrences, stopwords=stopwords)
 *```
   *
   *
   * Created by Mario Alemi on 07/04/2017 in El Estrecho, Putumayo, Peru
   */
-class Conversations(val rawConversations: List[String], tokenizer: String => List[String],
+class Conversations(val rawConversations: List[String], tokenizer: String => List[(String, List[String])],
                     val priorOccurrences: Map[String, Int] = Map() withDefaultValue(0),
                     val stopwords: Set[String] = Set()) {
 
@@ -63,32 +65,33 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
 
   val priorN: Int = priorOccurrences.toList.foldLeft(0.0)((acc, v) => acc + v._2).round.toInt
   // Prepare sentences (each is a list of Strings)
-  val sentences: List[List[String]] = for (l <- rawConversations if tokenizer(l).nonEmpty)
-    yield tokenizer(l).filterNot(x => stopwords.contains(x.toLowerCase))
-  val observedVocabulary: List[String] =  sentences.flatten
+  val exchanges: List[List[(String, List[String])]] = for (l <- rawConversations if tokenizer(l).nonEmpty)
+    yield tokenizer(l)
+  val sentences: List[List[String]] = exchanges.flatMap(_.map( _._2  ))
+  //TODO filter stopwords?
+  val observedVocabulary: List[String] = sentences.flatten
   val observedN: Int = observedVocabulary.length
   val observedOccurrences: Map[String, Int] =
     observedVocabulary.map(_.toLowerCase).groupBy(w => w).map(p => (p._1, p._2.length)) withDefaultValue 0
 
   private val minWordsPerSentence: Int = 10 // a sentence with less than that is not considered
-  val rawBagOfKeywordsInfo: List[List[(String, Double)]] =
-    for (s <- sentences.map(x => pruneSentence(x)) if s.length >= minWordsPerSentence) yield new Sentence(s).keywords
-  val rawKeywords: List[Set[String]] = for (l <- rawBagOfKeywordsInfo) yield (for (ki <- l) yield ki._1).toSet
+
+  // Because we want to check that keywords are correctly extracted, will have tuple like (original words, keywords, bigrams...)
+  val rawBagOfKeywordsInfo: List[(List[String], List[(String, Double)])] =
+    for (s <- sentences.map(x => pruneSentence(x)) if s.length >= minWordsPerSentence) yield (s, new Sentence(s).keywords)
+
+  val rawKeywords: List[(List[String], Set[String])] = for (l <- rawBagOfKeywordsInfo) yield (l._1, (for (ki <- l._2) yield ki._1).toSet)
 
   // Now we want to filter the important keywords. These are the ones
   // who appear often enough not to surprise us anymore.
-  val extractedKeywords: Map[String, Double] = (rawBagOfKeywordsInfo.flatten.map(_._1) groupBy (w => w))
+  val extractedKeywords: Map[String, Double] = (rawBagOfKeywordsInfo.map(_._2).flatten.map(_._1) groupBy (w => w))
     .map(p => (p._1, Binomial(priorN+observedN, observedOccurrences(p._1.toLowerCase) + priorOccurrences(p._1.toLowerCase)).activePotential(p._2.length)))
 
   //TODO temporary solution, need to understand how to set a cutoff
-  // (and for some reasons having extractedKeywords as Map creates problems in keywords:
-  // extractedKeywords.toMap(ki._1)
-  // type mismatch
-  // found   : String
-  // required: <:<[(String, Double),(?, ?)]
   private val ekList = extractedKeywords.toList.sortBy(_._2)
   val cutoff: Double = ekList(ekList.length/10)._2
 
-  val keywords: List[Set[String]] = for (l <- rawBagOfKeywordsInfo) yield (for (ki <- l if extractedKeywords(ki._1) < cutoff) yield ki._1).toSet
+  val keywords: List[(List[String], Set[String])] =
+    for (l <- rawBagOfKeywordsInfo) yield (l._1, (for (ki <- l._2 if extractedKeywords(ki._1) < cutoff) yield ki._1).toSet)
 
 }
