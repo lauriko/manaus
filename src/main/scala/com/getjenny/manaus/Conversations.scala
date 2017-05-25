@@ -25,7 +25,7 @@ import com.getjenny.manaus.util.Binomial
     // instantiate the Conversations
     val rawConversations = Source.fromFile("/Users/mal/pCloud/Scala/manaus/convs.head.csv").getLines.toList
     val conversations = new Conversations(rawConversations=rawConversations, tokenizer=tokenizer,
-      priorOccurrences=priorOccurrences, stopwords=stopwords)
+      priorOccurrences=priorOccurrences)
 *```
   *
   *
@@ -75,7 +75,6 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
   val exchanges: List[List[(String, List[String])]] = for (l <- rawConversations if tokenizer(l).nonEmpty)
     yield tokenizer(l)
   val sentences: List[List[String]] = exchanges.flatMap(_.map( _._2  ))
-  //TODO filter stopwords?
   val observedVocabulary: List[String] = sentences.flatten
   val observedN: Int = observedVocabulary.length
   val observedOccurrences: Map[String, Int] =

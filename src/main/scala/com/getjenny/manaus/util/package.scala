@@ -39,8 +39,8 @@ package object util {
   /**
     * Ad-hoc tokenizer for our (private) test data.
     *
-    * @param line A string with the conversation in this format: """ "CLIENT: I want...";"AGENT: sure..."\n """
-    * @return List(List("CLIENT", "Hey..."), List("AGENT", "hello..."))
+    * @param line A string with the conversation in this format: """ "CLIENT: I want to renew a subscription...";"AGENT: Sure, tell me your name..."\n """
+    * @return List(List("CLIENT", "I want to renew a subscription..."), List("AGENT", "Sure, tell me your name..."))
     */
   def tokenizer(line: String): List[(String, List[String])] = {
     try {

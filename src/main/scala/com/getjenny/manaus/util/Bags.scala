@@ -17,7 +17,7 @@ package com.getjenny.manaus.util
   *
   * * llrSignificativeBigrams: significative bigrams with the log-likelihood Score
   * * binomialSignificativeBigrams: significative bigrams measuring a higher-than expected frequency of one word compared to the other
-  * * trinomialSignificativeTrigrams: 
+  * * trinomialSignificativeTrigrams:
   *
   *
   *
