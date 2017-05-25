@@ -8,11 +8,11 @@ package object util {
   def binomialFactor(n: Int, k: Int): Double = factorial(n)/(factorial(n-k)*factorial(k))
   def multinomialFactor(n: Int, k: List[Int]): Double = factorial(n)/ k.map(factorial(_)).product
 
-  def b2t(bigram: Set[String]): (String, String) = {
+  def bigramSet2tuple(bigram: Set[String]): (String, String) = {
     assert(bigram.size == 2, "b2t only for bigrams")
     (bigram.head, bigram.tail.head)
   }
-  def b2tInv(bigram: Set[String]): (String, String) = {
+  def bigramSet2tupleInverted(bigram: Set[String]): (String, String) = {
     assert(bigram.size == 2, "b2t only for bigrams")
     (bigram.tail.head, bigram.head)
   }
@@ -39,7 +39,7 @@ package object util {
   /**
     * Ad-hoc tokenizer for our (private) test data.
     *
-    * @param line A string with the conversation.
+    * @param line A string with the conversation in this format: """ "CLIENT: I want...";"AGENT: sure..."\n """
     * @return List(List("CLIENT", "Hey..."), List("AGENT", "hello..."))
     */
   def tokenizer(line: String): List[(String, List[String])] = {
@@ -69,4 +69,4 @@ package object util {
       case e: Exception => List()
     }
   }
-}
+ }

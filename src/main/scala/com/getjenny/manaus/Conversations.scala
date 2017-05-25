@@ -2,13 +2,16 @@ package com.getjenny.manaus
 
 import com.getjenny.manaus.util.Binomial
 
-/** e.g.
-  * It receives two inputs:
+/** Created by Mario Alemi on 07/04/2017 in El Estrecho, Putumayo, Peru
   *
-  * conversations: A List of `String`s, where each element is a conversation
+  *
+  *
+  *
+  * conversations: A List of `String`s, where each element is a conversation.
+  * tokenizer
   * priorOccurrences: A Map with occurrences of words as given by external corpora (wiki etc)
   *
-  * E.g.:
+  * Example of usage:
   *
   *
   ```
@@ -21,17 +24,21 @@ import com.getjenny.manaus.util.Binomial
       yield (line.split("\t")(wordColumn).toLowerCase -> line.split("\t")(occurrenceColumn).toInt)).toMap.withDefaultValue(0)
     // instantiate the Conversations
     val rawConversations = Source.fromFile("/Users/mal/pCloud/Scala/manaus/convs.head.csv").getLines.toList
-    val stopwords=Source.fromFile("en_stopwords.txt").getLines.toSet
     val conversations = new Conversations(rawConversations=rawConversations, tokenizer=tokenizer,
       priorOccurrences=priorOccurrences, stopwords=stopwords)
 *```
   *
   *
-  * Created by Mario Alemi on 07/04/2017 in El Estrecho, Putumayo, Peru
+  *
+  *
+  * @param rawConversations List of String, each element is a conversation to be tokenized by tokenizer
+  * @param tokenizer takes one conversation in, outputs List(("CLIENT", "I need help"), ("AGENT", "Tell me..." ))
+  * @param priorOccurrences Map with occurrence for each word from a corpus different from the conversation log.
+  *
+  *
   */
 class Conversations(val rawConversations: List[String], tokenizer: String => List[(String, List[String])],
-                    val priorOccurrences: Map[String, Int] = Map() withDefaultValue(0),
-                    val stopwords: Set[String] = Set()) {
+                    val priorOccurrences: Map[String, Int] = Map() withDefaultValue(0)) {
 
 
   /**
@@ -40,7 +47,7 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
   class Sentence(s: List[String]) {
     private val minSentenceInfoBit = 32
     private val minKeywordInfo = 8
-    val localOccurrences: Map[String, Int] = s.map(_.toLowerCase).groupBy(w => w).map(p => (p._1, p._2.length))
+    val localOccurrences: Map[String, Int] = s.map(_.toLowerCase).groupBy(identity).mapValues(_.length)
     val wordsInfo: Map[String, Double] = (for (w <- s if observedOccurrences(w.toLowerCase) > 0)
       yield (w.toLowerCase, Binomial(priorN+observedN, observedOccurrences(w.toLowerCase) + priorOccurrences(w.toLowerCase))
         .rightSurprise(s.length, localOccurrences(w.toLowerCase) ))).toMap
@@ -52,7 +59,7 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
       */
     def keywords: List[(String, Double)]  = {
       if (totalInformation <= minSentenceInfoBit) List()
-      else wordsInfo.toList.filter(x => x._2 > minKeywordInfo).map(x => (x._1, x._2/totalInformation )).sortBy(-_._2)
+      else wordsInfo.filter(x => x._2 > minKeywordInfo).mapValues(_/totalInformation ).toList.sortBy(-_._2)
     }
   }
 
@@ -72,7 +79,7 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
   val observedVocabulary: List[String] = sentences.flatten
   val observedN: Int = observedVocabulary.length
   val observedOccurrences: Map[String, Int] =
-    observedVocabulary.map(_.toLowerCase).groupBy(w => w).map(p => (p._1, p._2.length)) withDefaultValue 0
+    observedVocabulary.map(_.toLowerCase).groupBy(identity).mapValues(_.length) withDefaultValue 0
 
   private val minWordsPerSentence: Int = 10 // a sentence with less than that is not considered
 
@@ -84,7 +91,7 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
 
   // Now we want to filter the important keywords. These are the ones
   // who appear often enough not to surprise us anymore.
-  val extractedKeywords: Map[String, Double] = (rawBagOfKeywordsInfo.map(_._2).flatten.map(_._1) groupBy (w => w))
+  val extractedKeywords: Map[String, Double] = (rawBagOfKeywordsInfo.flatMap(_._2).map(_._1) groupBy (w => w))
     .map(p => (p._1, Binomial(priorN+observedN, observedOccurrences(p._1.toLowerCase) + priorOccurrences(p._1.toLowerCase)).activePotential(p._2.length)))
 
   //TODO temporary solution, need to understand how to set a cutoff
@@ -93,5 +100,9 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
 
   val keywords: List[(List[String], Set[String])] =
     for (l <- rawBagOfKeywordsInfo) yield (l._1, (for (ki <- l._2 if extractedKeywords(ki._1) < cutoff) yield ki._1).toSet)
+
+  //TODO :
+  // * extract keywords of conversations
+  // * extract key bi/trigrams in conversations
 
 }
