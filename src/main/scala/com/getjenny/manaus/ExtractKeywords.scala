@@ -37,7 +37,7 @@ import com.getjenny.manaus.util.Binomial
   *
   *
   */
-class Conversations(val rawConversations: List[String], tokenizer: String => List[(String, List[String])],
+class ExtractKeywords(val rawConversations: List[String], tokenizer: String => List[(String, List[String])],
                     val priorOccurrences: Map[String, Int] = Map() withDefaultValue(0)) {
 
 
@@ -49,8 +49,10 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
     private val minKeywordInfo = 8
     val localOccurrences: Map[String, Int] = s.map(_.toLowerCase).groupBy(identity).mapValues(_.length)
     val wordsInfo: Map[String, Double] = (for (w <- s if observedOccurrences(w.toLowerCase) > 0)
-      yield (w.toLowerCase, Binomial(priorN+observedN, observedOccurrences(w.toLowerCase) + priorOccurrences(w.toLowerCase))
-        .rightSurprise(s.length, localOccurrences(w.toLowerCase) ))).toMap
+      yield
+        (w.toLowerCase,
+          Binomial(priorN+observedN, observedOccurrences(w.toLowerCase) + priorOccurrences(w.toLowerCase))
+            .rightSurprise(s.length, localOccurrences(w.toLowerCase) ))).toMap
     val totalInformation: Double = wordsInfo.toList.foldLeft(0.0)((acc, v) => acc + v._2)
 
     /**
@@ -66,8 +68,10 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
   // No words with two letters, words which appear only once in the corpus (if this is big enough)
   private val minObservedNForPruning: Int = 100000
   private def pruneSentence(sentence: List[String]): List[String] = {
-    if (observedN > minObservedNForPruning) for (w <- sentence if w.length > 2 && observedOccurrences(w.toLowerCase) > 1) yield w
-    else for (w <- sentence if w.length > 2 ) yield w
+    if (observedN > minObservedNForPruning)
+      for (w <- sentence if w.length > 2 && observedOccurrences(w.toLowerCase) > 1) yield w
+    else
+      for (w <- sentence if w.length > 2 ) yield w
   }
 
   val priorN: Int = priorOccurrences.toList.foldLeft(0.0)((acc, v) => acc + v._2).round.toInt
@@ -84,21 +88,31 @@ class Conversations(val rawConversations: List[String], tokenizer: String => Lis
 
   // Because we want to check that keywords are correctly extracted, will have tuple like (original words, keywords, bigrams...)
   val rawBagOfKeywordsInfo: List[(List[String], List[(String, Double)])] =
-    for (s <- sentences.map(x => pruneSentence(x)) if s.length >= minWordsPerSentence) yield (s, new Sentence(s).keywords)
+    for (s <- sentences.map(x => pruneSentence(x)) if s.length >= minWordsPerSentence)
+      yield (s, new Sentence(s).keywords)
 
-  val rawKeywords: List[(List[String], Set[String])] = for (l <- rawBagOfKeywordsInfo) yield (l._1, (for (ki <- l._2) yield ki._1).toSet)
+  val rawKeywords: List[(List[String], Set[String])] = for (l <- rawBagOfKeywordsInfo)
+    yield (l._1, (for (ki <- l._2) yield ki._1).toSet)
 
   // Now we want to filter the important keywords. These are the ones
   // who appear often enough not to surprise us anymore.
-  val extractedKeywords: Map[String, Double] = (rawBagOfKeywordsInfo.flatMap(_._2).map(_._1) groupBy (w => w))
-    .map(p => (p._1, Binomial(priorN+observedN, observedOccurrences(p._1.toLowerCase) + priorOccurrences(p._1.toLowerCase)).activePotential(p._2.length)))
+  val extractedKeywords: Map[String, Double] =
+    (rawBagOfKeywordsInfo.flatMap(_._2).map(_._1) groupBy (w => w))
+      .map(p =>
+        (p._1,
+          Binomial(priorN+observedN,
+            observedOccurrences(p._1.toLowerCase) + priorOccurrences(p._1.toLowerCase)
+          ).activePotential(p._2.length)
+        )
+      )
 
   //TODO temporary solution, need to understand how to set a cutoff
   private val ekList = extractedKeywords.toList.sortBy(_._2)
   val cutoff: Double = ekList(ekList.length/10)._2
 
   val keywords: List[(List[String], Set[String])] =
-    for (l <- rawBagOfKeywordsInfo) yield (l._1, (for (ki <- l._2 if extractedKeywords(ki._1) < cutoff) yield ki._1).toSet)
+    for (l <- rawBagOfKeywordsInfo)
+      yield (l._1, (for (ki <- l._2 if extractedKeywords(ki._1) < cutoff) yield ki._1).toSet)
 
   //TODO :
   // * extract keywords of conversations

@@ -12,6 +12,7 @@ package object util {
     assert(bigram.size == 2, "b2t only for bigrams")
     (bigram.head, bigram.tail.head)
   }
+
   def bigramSet2tupleInverted(bigram: Set[String]): (String, String) = {
     assert(bigram.size == 2, "b2t only for bigrams")
     (bigram.tail.head, bigram.head)
@@ -42,7 +43,7 @@ package object util {
     * @param line A string with the conversation in this format: """ "CLIENT: I want to renew a subscription...";"AGENT: Sure, tell me your name..."\n """
     * @return List(List("CLIENT", "I want to renew a subscription..."), List("AGENT", "Sure, tell me your name..."))
     */
-  def tokenizer(line: String): List[(String, List[String])] = {
+  def split_sentences(line: String): List[(String, List[String])] = {
     try {
       val splitLine = line.split("\";\"").map(_.trim.replaceAll("\"", ""))
       def loop(pp: List[List[String]], splitLine: Array[String]): List[List[String]] = {
