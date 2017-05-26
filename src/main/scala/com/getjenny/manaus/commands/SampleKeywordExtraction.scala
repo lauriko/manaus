@@ -1,10 +1,8 @@
 package com.getjenny.manaus.commands
 
-import com.getjenny.manaus.ExtractKeywords
-import com.getjenny.manaus.util.Bags
-import com.getjenny.manaus.util.split_sentences
+import com.getjenny.manaus.util._
+import com.getjenny.manaus._
 import scopt.OptionParser
-
 import scala.io.Source
 
 object SampleKeywordExtraction {
@@ -19,19 +17,39 @@ object SampleKeywordExtraction {
     val wordColumn = 1
     val occurrenceColumn = 2
     val word_frequencies = params.word_frequencies
-    val priorOccurrences: Map[String, Int] = (for (line <- Source.fromFile(word_frequencies).getLines)
-      yield line.split("\t")(wordColumn).toLowerCase -> line.split("\t")(occurrenceColumn).toInt)
-      .toMap.withDefaultValue(0)
+
+    val priorOccurrencesMap: Map[String, Int] = Source.fromFile(word_frequencies).getLines
+      .map(line => {
+        val splitted_line = line.split("\t")
+        splitted_line(wordColumn).toLowerCase -> line.split("\t")(occurrenceColumn).toInt
+      }).toMap.withDefaultValue(0)
+
+    val priorOccurrences = new PriorTokensOccurrencesMap(priorOccurrencesMap)
 
     // instantiate the Conversations
-    val rawConversations = Source.fromFile(params.raw_conversation).getLines.toList
-    val conversations = new ExtractKeywords(rawConversations=rawConversations, tokenizer=split_sentences,
-      priorOccurrences=priorOccurrences)
+    val rawConversationsLines = Source.fromFile(params.raw_conversation).getLines.toList
+
+    val exchanges: List[List[(String, List[String])]] = rawConversationsLines.map(l => {
+      split_sentences(l)
+    }).filter(_.nonEmpty)
+
+    val sentences: List[List[String]] = exchanges.flatMap(_.map( _._2  ))
+    val observedVocabulary: List[String] = sentences.flatten
+
+    val observedOccurrencesMap: Map[String, Int] =
+      observedVocabulary.map(_.toLowerCase).groupBy(identity).mapValues(_.length) withDefaultValue 0
+
+    val observedOccurrences = new ObservedTokensOccurrencesMap(observedOccurrencesMap)
+
+    val conversations = new KeywordsExtraction(priorOccurrences=priorOccurrences,
+      observedOccurrences=observedOccurrences,
+      exchanges=exchanges)
+
     val bags = conversations.keywords
 
     println("Raw Keywords:\n" + conversations.rawBagOfKeywordsInfo.take(100).mkString("\n"))
 
-    println("Total Extracted Keywords:\n" + conversations.extractedKeywords.toList.length)
+    println("Total Extracted Keywords: " + conversations.extractedKeywords.toList.length)
     println("Extracted Keywords:\n" + conversations.extractedKeywords.take(500))
 
     println("Clean Keywords:\n" + conversations.keywords.take(500))

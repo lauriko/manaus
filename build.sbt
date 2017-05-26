@@ -9,8 +9,6 @@ scalaVersion := "2.12.1"
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
   Resolver.bintrayRepo("hseeberger", "maven"))
 
-//https://mvnrepository.com/artifact/org.elasticsearch
-
 libraryDependencies ++= {
   Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
@@ -18,7 +16,11 @@ libraryDependencies ++= {
   )
 }
 
+scalacOptions += "-deprecation"
+scalacOptions += "-feature"
+
 enablePlugins(JavaServerAppPackaging)
+enablePlugins(GitVersioning)
 
 // Assembly settings
 mainClass in Compile := Some("com.getjenny.manaus.commands.SampleKeywordExtraction")
