@@ -17,8 +17,8 @@ object ConvertConversationDataFormat {
   def doFormatConversion(params: Params): Unit = {
 
     // list of tokenized sentences grouped by conversation
-    val rawConversationsLines = Source.fromFile(params.input_file).getLines.toList
-    val exchanges: List[(List[((String, String, List[String]), Int)], Int)] = rawConversationsLines.map(line => {
+    val rawConversationsLines = Source.fromFile(params.input_file).getLines
+    val exchanges: Iterator[(List[((String, String, List[String]), Int)], Int)] = rawConversationsLines.map(line => {
       split_sentences2(line)
     }).zipWithIndex
 
@@ -26,12 +26,12 @@ object ConvertConversationDataFormat {
       exchange._1.map(conv => {
         IndexedSeq(conv._1._1, conv._1._2, exchange._2.toString, conv._2.toString)
       })
-    })
+    }).flatten
 
     val output_file = new File(params.output_file)
     val file_writer = new FileWriter(output_file)
 
-    val entries = new_format_conversations.flatten.toTraversable
+    val entries = new_format_conversations.toTraversable
 
     //sentence, type, conv_id, sentence_id
     val csv_writer = CSVWriter.write(output=file_writer,
