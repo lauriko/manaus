@@ -19,7 +19,7 @@ sbt dist
 
 ## run from sbt
 
-sbt "run-main com.getjenny.manaus.commands.SampleKeywordExtraction --raw_conversation data/conversations.txt --word_frequencies data/word_frequency.tsv"
+sbt "run-main com.getjenny.manaus.commands.KeywordExtraction --raw_conversation data/conversations.txt --word_frequencies data/word_frequency.tsv"
 
 ## run from zip packet
 

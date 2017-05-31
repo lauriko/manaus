@@ -27,13 +27,11 @@ import com.getjenny.manaus.util.Binomial
 *```
   *
   * @param priorOccurrences Map with occurrence for each word from a corpus different from the conversation log.
-  * @param exchanges list of tokenized sentences grouped by conversation
   * @param observedOccurrences occurrence of terms into the observed vocabulary
   *
   */
 class KeywordsExtraction(priorOccurrences: TokensOccurrences,
-                         observedOccurrences: TokensOccurrences,
-                         exchanges: List[List[(String, List[String])]]) {
+                         observedOccurrences: TokensOccurrences) {
 
   /**
     * @param sentence_tokens list of sentence tokens
@@ -43,16 +41,15 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
                  minKeywordInfo: Int = 8
                 ) {
     val localOccurrences: Map[String, Int] =
-      sentence_tokens.map(_.toLowerCase).groupBy(identity).mapValues(_.length)
+      sentence_tokens.groupBy(identity).mapValues(_.length)
 
     val wordsInfo: Map[String, Double] = sentence_tokens.map(token => {
-      (token, observedOccurrences.getOccurrence(token.toLowerCase))
+      (token, observedOccurrences.getOccurrence(token))
     }).filter(_._2 > 0).map(token => {
-      val lowercase_token = token._1.toLowerCase
-      (lowercase_token,
+      (token._1,
         Binomial(priorOccurrences.getTokenN + observedOccurrences.getTokenN,
-          observedOccurrences.getOccurrence(lowercase_token) + priorOccurrences.getOccurrence(lowercase_token))
-          .rightSurprise(sentence_tokens.length, localOccurrences(lowercase_token)))
+          observedOccurrences.getOccurrence(token._1) + priorOccurrences.getOccurrence(token._1))
+          .rightSurprise(sentence_tokens.length, localOccurrences(token._1)))
     }).toMap
 
     val totalInformation: Double = wordsInfo.values.sum
@@ -79,12 +76,78 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
   def pruneSentence(sentence: List[String],
                     minObservedNForPruning: Int = 100000, min_chars: Int = 2): List[String] = {
     val pruned_sentence = if (observedOccurrences.getTokenN > minObservedNForPruning)
-      sentence.filter(_.length > min_chars).map(token => token.toLowerCase)
+      sentence.filter(_.length > min_chars).map(token => token)
         .map(token => (token, observedOccurrences.getOccurrence(token))).filter(_._2 > 1)
         .map(_._1)
     else
       sentence.filter(_.length > min_chars)
     pruned_sentence
   }
+
+    /** Informative words
+    *   Because we want to check that keywords are correctly extracted,
+    *   will have tuple like (original words, keywords, bigrams...)
+    * @param sentences list of sentences, each sentence is a list of words
+    * @param minWordsPerSentence the minimum amount of words on each sentence
+    * @return the list of most informative words for each sentence
+    */
+  def extractInformativeWords(sentences: List[List[String]], minWordsPerSentence: Int = 10):
+                              List[(List[String], List[(String, Double)])] = {
+    val rawBagOfKeywordsInfo: List[(List[String], List[(String, Double)])] =
+      sentences
+        .map(x => this.pruneSentence(x)).filter(_.length >= minWordsPerSentence)
+        .map(x => {
+          (x, new this.Sentence(x).keywords)
+        })
+    rawBagOfKeywordsInfo
+  }
+
+  /** Refined keywords list,
+    *   Now we want to filter the important keywords. These are the ones
+    *   who appear often enough not to surprise us anymore.
+    * @param informativeKeywords the list of informative words for each sentence
+    * @return the map of keywords weighted with active potential
+    */
+  def getWordsActivePotentialMap(informativeKeywords: List[(List[String], List[(String, Double)])]):
+              Map[String, Double] = {
+    val extractedKeywords: Map[String, Double] =
+      (informativeKeywords.flatMap(_._2).map(_._1) groupBy (w => w))
+        .map(p =>
+         (p._1,
+           Binomial(priorOccurrences.getTokenN + observedOccurrences.getTokenN,
+             observedOccurrences.getOccurrence(p._1) + priorOccurrences.getOccurrence(p._1)
+           ).activePotential(p._2.length)
+         )
+       )
+    extractedKeywords
+  }
+
+  /** extract the final keywords
+    *
+    * @param activePotentialKeywordsMap map of keywords weighted by active potential (see getWordsActivePotentialMap)
+    * @param informativeKeywords the list of informative keywords for each sentence
+    * @param sentences the list of token for each sentence
+    * @param cutoff_percentage a cutoff for low active potential tokens
+    * @return the final list of keywords for each sentence
+    */
+  def extractBags(activePotentialKeywordsMap: Map[String, Double],
+                  informativeKeywords: List[(List[String], List[(String, Double)])],
+                  sentences: List[List[String]],
+                 cutoff_percentage: Int = 10): List[(List[String], Set[String])] = {
+
+    val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(_._2)
+    val cutoff: Double = extractedKeywordsList(extractedKeywordsList.length/cutoff_percentage)._2
+
+    val bags: List[(List[String], Set[String])] =
+      informativeKeywords.map(sentence => {
+        val pruned_sentence_tokens = sentence._1
+        val extracted_keywords = sentence._2.map(token =>
+            (token, activePotentialKeywordsMap(token._1))).filter(_._2 < cutoff)
+            .map(x => x._1._1).toSet
+        (pruned_sentence_tokens, extracted_keywords)
+      })
+    bags
+  }
+
 
 }

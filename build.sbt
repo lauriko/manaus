@@ -12,6 +12,8 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
 libraryDependencies ++= {
   Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
+    "org.scalanlp" %% "breeze" % "0.13",
+    "org.scalanlp" %% "breeze-natives" % "0.13",
     "com.github.scopt" %% "scopt" % "3.5.0"
   )
 }
@@ -23,8 +25,8 @@ enablePlugins(JavaServerAppPackaging)
 enablePlugins(GitVersioning)
 
 // Assembly settings
-mainClass in Compile := Some("com.getjenny.manaus.commands.SampleKeywordExtraction")
-mainClass in assembly := Some("com.getjenny.manaus.commands.SampleKeywordExtraction")
+mainClass in Compile := Some("com.getjenny.manaus.commands.KeywordExtraction")
+mainClass in assembly := Some("com.getjenny.manaus.commands.KeywordExtraction")
 
 assemblyMergeStrategy in assembly := {
   case PathList("META-INF", xs @ _*) => MergeStrategy.discard

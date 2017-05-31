@@ -36,6 +36,42 @@ package object util {
     List(noWord, oneWord, bothWords)
   }
 
+  /**
+    * Ad-hoc tokenizer for our (private) test data.
+    *
+    * @param line A string with the conversation in this format: """ "CLIENT: I want to renew a subscription...";"AGENT: Sure, tell me your name..."\n """
+    * @return List(List("CLIENT", "I want to renew a subscription..."), List("AGENT", "Sure, tell me your name..."))
+    */
+  def split_sentences2(line: String): List[((String, String, List[String]), Int)] = {
+    try {
+      val splitLine = line.split("\";\"").map(_.trim.replaceAll("\"", ""))
+      def loop(pp: List[List[String]], splitLine: Array[String]): List[List[String]] = {
+        if (splitLine.tail.isEmpty) {
+          if (splitLine.head.trim.take(5) == "OTHER") pp
+          else if (pp.isEmpty) splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ").toList :: pp
+          else if (pp.head.head == "CLIENT" && splitLine.head.take(6) == "CLIENT") List("CLIENT", pp.head(1) + " " + splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ")(1)) :: pp.tail
+          else if (pp.head.head == "AGENT" && splitLine.head.take(5) == "AGENT") List("AGENT", pp.head(1) + " " + splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ")(1)) :: pp.tail
+          else splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ").toList :: pp
+        } else {
+          if (splitLine.head.trim.take(5) == "OTHER") loop(pp, splitLine.tail)
+          else if (pp.isEmpty) loop(splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ").toList :: pp, splitLine.tail)
+          else if (pp.head.head == "CLIENT" && splitLine.head.take(6) == "CLIENT")
+            loop( List("CLIENT", pp.head(1) + " " + splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ")(1)) :: pp.tail, splitLine.tail)
+          else if (pp.head.head == "AGENT" && splitLine.head.take(5) == "AGENT")
+            loop( List("AGENT", pp.head(1) + " " + splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ")(1) ) :: pp.tail, splitLine.tail)
+          else loop(splitLine.head.trim.stripPrefix("\"").stripSuffix("\"").split(": ").toList :: pp, splitLine.tail)
+        }
+      }
+
+      loop(List(), splitLine ).map(x =>
+        List(x.head, """[^a-zA-Z0-9]""".r.replaceAllIn(x(1).replaceAll("'", ""), " ") ) )
+        .map(x => (x(1), x.head, x(1).split(" ").toList) ).zipWithIndex
+
+    } catch {
+      case e: Exception => List()
+    }
+  }
+
 
   /**
     * Ad-hoc tokenizer for our (private) test data.
