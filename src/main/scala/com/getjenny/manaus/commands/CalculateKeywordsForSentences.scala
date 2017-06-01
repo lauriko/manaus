@@ -39,7 +39,7 @@ object CalculateKeywordsForSentences {
 
     // list of tokenized sentences grouped by conversation
     // (sentence, tokenized_sentence, type, conv_id, sentence_id)
-    val sentences = file_entries.map(line => {
+    val sentences = file_entries.iterator.map(line => {
       val sentence = line(0)
       val tokenized_sentence = sentence.split(" ").toList.filter(_ != "").map(w => w.toLowerCase)
       val entry_type = line(1)
@@ -49,7 +49,7 @@ object CalculateKeywordsForSentences {
     })
 
     val observedOccurrencesMap: Map[String, Int] = sentences.flatMap(e => e._2)
-      .groupBy(identity).mapValues(_.length) withDefaultValue 0
+      .toList.groupBy(identity).mapValues(_.length) withDefaultValue 0
 
     val observedOccurrences = new ObservedTokensOccurrencesMap(observedOccurrencesMap)
     (sentences, observedOccurrences)
@@ -64,7 +64,7 @@ object CalculateKeywordsForSentences {
       observedOccurrences=observedOccurrences)
 
     /* Informative words */
-    val rawBagOfKeywordsInfo: Iterable[List[(String, Double)]] = sentences.map(sentence => {
+    val rawBagOfKeywordsInfo: Iterator[List[(String, Double)]] = sentences.map(sentence => {
       val informativeK = keywordsExtraction.extractInformativeWords(sentence._2)
       informativeK
     })
@@ -72,13 +72,13 @@ object CalculateKeywordsForSentences {
     /* Map(keyword -> active potential) */
     val activePotentialKeywordsMap = keywordsExtraction.getWordsActivePotentialMap(rawBagOfKeywordsInfo)
 
-    val informativeKeywords: Iterable[(List[String], List[(String, Double)])] =
+    val informativeKeywords: Iterator[(List[String], List[(String, Double)])] =
       sentences.zip(rawBagOfKeywordsInfo).map(sentence => {
       (sentence._1._2, sentence._2)
     })
 
     // list of the final keywords
-    val bags: Iterable[(List[String], Set[String])] =
+    val bags: Iterator[(List[String], Set[String])] =
         keywordsExtraction.extractBags(activePotentialKeywordsMap = activePotentialKeywordsMap,
         informativeKeywords = informativeKeywords)
 
