@@ -2,8 +2,6 @@ import NativePackagerHelper._
 
 name := "manaus"
 
-version := "0.1"
-
 scalaVersion := "2.12.1"
 
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
@@ -25,8 +23,8 @@ enablePlugins(JavaServerAppPackaging)
 enablePlugins(GitVersioning)
 
 // Assembly settings
-mainClass in Compile := Some("com.getjenny.manaus.commands.KeywordExtraction")
-mainClass in assembly := Some("com.getjenny.manaus.commands.KeywordExtraction")
+mainClass in Compile := Some("com.getjenny.manaus.commands.CalculateKeywordsForSentences")
+mainClass in assembly := Some("com.getjenny.manaus.commands.CalculateKeywordsForSentences")
 
 assemblyMergeStrategy in assembly := {
   case PathList("META-INF", xs @ _*) => MergeStrategy.discard
