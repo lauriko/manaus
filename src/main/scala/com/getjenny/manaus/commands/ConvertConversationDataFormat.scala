@@ -18,8 +18,9 @@ object ConvertConversationDataFormat {
 
     // list of tokenized sentences grouped by conversation
     val rawConversationsLines = Source.fromFile(params.input_file).getLines
-    val exchanges: Iterator[(List[((String, String, List[String]), Int)], Int)] = rawConversationsLines.map(line => {
-      split_sentences2(line)
+    val exchanges: Iterator[(List[((String, String, List[String]), Int)], Int)] =
+      rawConversationsLines.map(line => {
+        split_sentences(line)
     }).zipWithIndex
 
     val new_format_conversations = exchanges.map(exchange => {

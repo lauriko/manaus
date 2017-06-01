@@ -87,19 +87,16 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     /** Informative words
     *   Because we want to check that keywords are correctly extracted,
     *   will have tuple like (original words, keywords, bigrams...)
-    * @param sentences list of sentences, each sentence is a list of words
+    * @param sentence a sentence as a list of words
     * @param minWordsPerSentence the minimum amount of words on each sentence
     * @return the list of most informative words for each sentence
     */
-  def extractInformativeWords(sentences: List[List[String]], minWordsPerSentence: Int = 10):
-                              List[(List[String], List[(String, Double)])] = {
-    val rawBagOfKeywordsInfo: List[(List[String], List[(String, Double)])] =
-      sentences
-        .map(x => this.pruneSentence(x)).filter(_.length >= minWordsPerSentence)
-        .map(x => {
-          (x, new this.Sentence(x).keywords)
-        })
-    rawBagOfKeywordsInfo
+  def extractInformativeWords(sentence: List[String], minWordsPerSentence: Int = 10):
+                      List[(String, Double)] = {
+    val pruned = this.pruneSentence(sentence)
+    val filtered = if(pruned.length > minWordsPerSentence) pruned else List.empty[String]
+    val keywords = if(filtered.nonEmpty) new Sentence(filtered).keywords else List.empty[(String, Double)]
+    keywords
   }
 
   /** Refined keywords list,
@@ -108,15 +105,15 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     * @param informativeKeywords the list of informative words for each sentence
     * @return the map of keywords weighted with active potential
     */
-  def getWordsActivePotentialMap(informativeKeywords: List[(List[String], List[(String, Double)])]):
+  def getWordsActivePotentialMap(informativeKeywords: Iterable[List[(String, Double)]]):
               Map[String, Double] = {
     val extractedKeywords: Map[String, Double] =
-      (informativeKeywords.flatMap(_._2).map(_._1) groupBy (w => w))
+      informativeKeywords.flatMap(_.map(_._1)).filter(_.nonEmpty).groupBy(w => w)
         .map(p =>
          (p._1,
            Binomial(priorOccurrences.getTokenN + observedOccurrences.getTokenN,
              observedOccurrences.getOccurrence(p._1) + priorOccurrences.getOccurrence(p._1)
-           ).activePotential(p._2.length)
+           ).activePotential(p._2.toList.length)
          )
        )
     extractedKeywords
@@ -126,19 +123,17 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     *
     * @param activePotentialKeywordsMap map of keywords weighted by active potential (see getWordsActivePotentialMap)
     * @param informativeKeywords the list of informative keywords for each sentence
-    * @param sentences the list of token for each sentence
     * @param cutoff_percentage a cutoff for low active potential tokens
     * @return the final list of keywords for each sentence
     */
   def extractBags(activePotentialKeywordsMap: Map[String, Double],
-                  informativeKeywords: List[(List[String], List[(String, Double)])],
-                  sentences: List[List[String]],
-                 cutoff_percentage: Int = 10): List[(List[String], Set[String])] = {
+                  informativeKeywords: Iterable[(List[String], List[(String, Double)])],
+                 cutoff_percentage: Int = 10): Iterable[(List[String], Set[String])] = {
 
     val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(_._2)
     val cutoff: Double = extractedKeywordsList(extractedKeywordsList.length/cutoff_percentage)._2
 
-    val bags: List[(List[String], Set[String])] =
+    val bags: Iterable[(List[String], Set[String])] =
       informativeKeywords.map(sentence => {
         val pruned_sentence_tokens = sentence._1
         val extracted_keywords = sentence._2.map(token =>
