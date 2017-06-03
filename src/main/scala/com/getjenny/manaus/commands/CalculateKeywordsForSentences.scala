@@ -13,6 +13,7 @@ object CalculateKeywordsForSentences {
   private case class Params(
     raw_conversations: String = "data/conversations.txt",
     word_frequencies: String = "data/word_frequency.tsv",
+    minWordsPerSentence: Int = 10,
     output_file: String = ""
   )
 
@@ -57,8 +58,10 @@ object CalculateKeywordsForSentences {
     (sentences, observedOccurrences)
   }
 
-  def doKeywordExtraction(params: Params, minWordsPerSentence: Int = 10): Unit = {
+  def doKeywordExtraction(params: Params): Unit = {
     // Load the prior occurrences
+
+    val minWordsPerSentence = params.minWordsPerSentence
     val priorOccurrences = readPriorOccurrencesMap(params.word_frequencies)
 
     println("INFO: getting sentences and observedOccurrences")
@@ -142,6 +145,10 @@ object CalculateKeywordsForSentences {
       opt[String]("output_file").required()
         .text(s"the output file")
         .action((x, c) => c.copy(output_file = x))
+      opt[Int]("min_words_in_sentence").required()
+        .text(s"discard the sentences with less that N words" +
+          s"  default: ${defaultParams.minWordsPerSentence}")
+        .action((x, c) => c.copy(minWordsPerSentence = x))
     }
 
     parser.parse(args, defaultParams) match {
