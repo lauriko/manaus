@@ -6,6 +6,7 @@ import breeze.io.{CSVReader, CSVWriter}
 import java.io.{File, FileWriter, FileReader}
 import scopt.OptionParser
 import scala.io.Source
+import scala.collection.SeqView
 
 object CalculateKeywordsForSentences {
 
@@ -27,58 +28,66 @@ object CalculateKeywordsForSentences {
     priorOccurrences
   }
 
-  def buildObservedOccurrencesMapFromConversations(conversations_file: String) = {
-
-    // instantiate the Conversations
-    val rawConversationsLines = Source.fromFile(conversations_file).getLines.toList
-
+  def getSentences(conversations_file: String): SeqView[IndexedSeq[String], Seq[_]] = {
     val file = new File(conversations_file)
     val file_reader = new FileReader(file)
-    lazy val file_entries = CSVReader.read(input=file_reader, separator=';',
+    val file_entries = CSVReader.read(input=file_reader, separator=';',
       quote='"', escape='\\', skipLines=0)
+    file_entries.view
+  }
+
+  def buildObservedOccurrencesMapFromConversations(conversations_file: String) = {
+
 
     // list of tokenized sentences grouped by conversation
     // (sentence, tokenized_sentence, type, conv_id, sentence_id)
-    val sentences = file_entries.iterator.map(line => {
-      val sentence = line(0)
-      val tokenized_sentence = sentence.split(" ").toList.filter(_ != "").map(w => w.toLowerCase)
-      val entry_type = line(1)
-      val conv_id = line(2)
-      val sentence_id = line(3)
-      (sentence, tokenized_sentence, entry_type, conv_id, sentence_id)
+    def sentences = getSentences(conversations_file).map(line => {
+      val tokenized_sentence = line(0).split(" ").toList.filter(_ != "").map(w => w.toLowerCase)
+      (line(0), tokenized_sentence, line(1), line(2), line(3))
     })
 
-    val observedOccurrencesMap: Map[String, Int] = sentences.flatMap(e => e._2)
-      .toList.groupBy(identity).mapValues(_.length) withDefaultValue 0
+    println("INFO: calculating observedOcurrencesMap")
+    val observedOccurrencesMap = sentences.flatMap(line => line._2)
+      .foldLeft(Map.empty[String, Int]){
+        (count, word) => count + (word -> (count.getOrElse(word, 0) + 1))
+      }
 
     val observedOccurrences = new ObservedTokensOccurrencesMap(observedOccurrencesMap)
+
     (sentences, observedOccurrences)
   }
 
   def doKeywordExtraction(params: Params, minWordsPerSentence: Int = 10): Unit = {
     // Load the prior occurrences
     val priorOccurrences = readPriorOccurrencesMap(params.word_frequencies)
+
+    println("INFO: getting sentences and observedOccurrences")
     val (sentences, observedOccurrences) = buildObservedOccurrencesMapFromConversations(params.raw_conversations)
 
+    println("INFO: extract keywords")
     val keywordsExtraction = new KeywordsExtraction(priorOccurrences=priorOccurrences,
       observedOccurrences=observedOccurrences)
 
+    println("INFO: extract informativeWords")
     /* Informative words */
-    val rawBagOfKeywordsInfo: Iterator[List[(String, Double)]] = sentences.map(sentence => {
+    val rawBagOfKeywordsInfo: SeqView[List[(String, Double)], Seq[_]] = sentences.map(sentence => {
       val informativeK = keywordsExtraction.extractInformativeWords(sentence._2)
       informativeK
     })
 
+    println("INFO: calculating active potentials Map")
     /* Map(keyword -> active potential) */
     val activePotentialKeywordsMap = keywordsExtraction.getWordsActivePotentialMap(rawBagOfKeywordsInfo)
 
-    val informativeKeywords: Iterator[(List[String], List[(String, Double)])] =
+    println("INFO: getting informative words for sentences")
+    val informativeKeywords: SeqView[(List[String], List[(String, Double)]), Seq[_]] =
       sentences.zip(rawBagOfKeywordsInfo).map(sentence => {
       (sentence._1._2, sentence._2)
     })
 
+    println("INFO: calculating bags")
     // list of the final keywords
-    val bags: Iterator[(List[String], Set[String])] =
+    val bags: SeqView[(List[String], Set[String]), Seq[_]] =
         keywordsExtraction.extractBags(activePotentialKeywordsMap = activePotentialKeywordsMap,
         informativeKeywords = informativeKeywords)
 
@@ -89,23 +98,27 @@ object CalculateKeywordsForSentences {
     println("Clean Keywords:\n" + bags.toList)
     */
 
+    println("INFO: merging sentences with bags")
+
     val out_keywords = sentences.zip(bags).map(item => {
       val sentence = item._1
       val bag = item._2
-      IndexedSeq(sentence._1, sentence._3, sentence._4, sentence._5, bag._2.mkString(" "))
+      IndexedSeq(sentence._1, sentence._3, sentence._4, bag._2.mkString(" "))
     })
+
+    println("INFO: results serialization on file")
 
     val output_file = new File(params.output_file)
     val file_writer = new FileWriter(output_file)
 
-    val entries = out_keywords.toTraversable
-
     //sentence, type, conv_id, sentence_id
     val csv_writer = CSVWriter.write(output=file_writer,
-      mat=entries,
+      mat=out_keywords,
       separator=';',
       quote='"',
       escape='\\')
+
+    println("INFO: keywords calculation completed")
 
     /*
     val g = Bags(bags.toList)
