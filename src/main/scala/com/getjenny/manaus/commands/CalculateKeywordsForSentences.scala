@@ -74,7 +74,7 @@ object CalculateKeywordsForSentences {
     println("INFO: extract informativeWords")
     /* Informative words */
     val rawBagOfKeywordsInfo: SeqView[List[(String, Double)], Seq[_]] = sentences.map(sentence => {
-      val informativeK = keywordsExtraction.extractInformativeWords(sentence._2)
+      val informativeK = keywordsExtraction.extractInformativeWords(sentence._2, minWordsPerSentence)
       informativeK
     })
 
