@@ -63,7 +63,9 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
       if (totalInformation <= minSentenceInfoBit)
         List()
       else
-        wordsInfo.filter(x => x._2 > minKeywordInfo).mapValues(_/totalInformation).toList.sortBy(-_._2)
+//        wordsInfo.filter(x => x._2 > minKeywordInfo).mapValues(_/totalInformation).toList.sortBy(-_._2)
+      //TODO trying without /totalInformation
+        wordsInfo.filter(x => x._2 > minKeywordInfo).mapValues(_.toDouble).toList.sortBy(-_._2)
     }
   }
 
@@ -124,21 +126,24 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     *
     * @param activePotentialKeywordsMap map of keywords weighted by active potential (see getWordsActivePotentialMap)
     * @param informativeKeywords the list of informative keywords for each sentence
-    * @param cutoff_percentage a cutoff for low active potential tokens
+    * @param misspell_max_occurrence given a big enough sample, min freq beyond what we consider the token a misspell
     * @return the final list of keywords for each sentence
     */
   def extractBags(activePotentialKeywordsMap: Map[String, Double],
                   informativeKeywords: SeqView[(List[String], List[(String, Double)]), Seq[_]],
-                 cutoff_percentage: Int = 10): SeqView[(List[String], Set[String]), Seq[_]] = {
+                  misspell_max_occurrence: Int = 5): SeqView[(List[String], Set[String]), Seq[_]] = {
 
-    val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(_._2)
-    val cutoff: Double = extractedKeywordsList(extractedKeywordsList.length/cutoff_percentage)._2
+//    val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(-_._2)
+//    val highest_occurence = extractedKeywordsList.head
+//    println("DEBUG: highest_occurence " + highest_occurence)
+//    val cutoff: Double = Math.min( Math.round(highest_occurence._2 / 100.0), misspell_max_occurrence )
+//      //extractedKeywordsList(extractedKeywordsList.length/cutoff_percentage)._2
 
     val bags: SeqView[(List[String], Set[String]), Seq[_]] =
       informativeKeywords.view.map(sentence => {
         val pruned_sentence_tokens = sentence._1
         val extracted_keywords = sentence._2.map(token =>
-            (token, activePotentialKeywordsMap(token._1))).filter(_._2 < cutoff)
+            (token, activePotentialKeywordsMap(token._1)))//.filter(_._2 > cutoff)
             .map(x => x._1._1).toSet
         (pruned_sentence_tokens, extracted_keywords)
       })
