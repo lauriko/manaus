@@ -111,7 +111,7 @@ object CalculateKeywordsForSentences {
     val out_keywords = sentences.zip(bags).map(item => {
       val sentence = item._1
       val bag = item._2
-      val keywords = bag._2.map(x => x._1 + "|" + x._2.toString).mkString(" ")
+      val keywords = bag._2.toSeq.sortBy(- _._2).map(x => x._1 + "|" + x._2.toString).mkString(" ")
       IndexedSeq(sentence._1, sentence._3, sentence._4, keywords)
     })
 
