@@ -14,6 +14,8 @@ object CalculateKeywordsForSentences {
     raw_conversations: String = "data/conversations.txt",
     word_frequencies: String = "data/word_frequency.tsv",
     minWordsPerSentence: Int = 10,
+    pruneTermsThreshold: Int = 100000,
+    misspell_max_occurrence: Int = 5,
     output_file: String = ""
   )
 
@@ -62,6 +64,8 @@ object CalculateKeywordsForSentences {
     // Load the prior occurrences
 
     val minWordsPerSentence = params.minWordsPerSentence
+    val pruneTermsThreshold = params.pruneTermsThreshold
+    val misspell_max_occurrence = params.misspell_max_occurrence
     val priorOccurrences = readPriorOccurrencesMap(params.word_frequencies)
 
     println("INFO: getting sentences and observedOccurrences")
@@ -74,7 +78,8 @@ object CalculateKeywordsForSentences {
     println("INFO: extract informativeWords")
     /* Informative words */
     val rawBagOfKeywordsInfo: SeqView[List[(String, Double)], Seq[_]] = sentences.map(sentence => {
-      val informativeK = keywordsExtraction.extractInformativeWords(sentence._2, minWordsPerSentence)
+      val informativeK = keywordsExtraction.extractInformativeWords(sentence._2,
+        pruneTermsThreshold, minWordsPerSentence)
       informativeK
     })
 
@@ -90,9 +95,9 @@ object CalculateKeywordsForSentences {
 
     println("INFO: calculating bags")
     // list of the final keywords
-    val bags: SeqView[(List[String], Set[String]), Seq[_]] =
+    val bags: SeqView[(List[String], Map[String, Double]), Seq[_]] =
         keywordsExtraction.extractBags(activePotentialKeywordsMap = activePotentialKeywordsMap,
-        informativeKeywords = informativeKeywords)
+        informativeKeywords = informativeKeywords, misspell_max_occurrence = misspell_max_occurrence)
 
     /*
     println("Raw Keywords:\n" + sentences.map(_._2).zip(rawBagOfKeywordsInfo).take(100).mkString("\n"))
@@ -106,7 +111,8 @@ object CalculateKeywordsForSentences {
     val out_keywords = sentences.zip(bags).map(item => {
       val sentence = item._1
       val bag = item._2
-      IndexedSeq(sentence._1, sentence._3, sentence._4, bag._2.mkString(" "))
+      val keywords = bag._2.map(x => x._1 + "|" + x._2.toString).mkString(" ")
+      IndexedSeq(sentence._1, sentence._3, sentence._4, keywords)
     })
 
     println("INFO: results serialization on file")
@@ -145,10 +151,18 @@ object CalculateKeywordsForSentences {
       opt[String]("output_file").required()
         .text(s"the output file")
         .action((x, c) => c.copy(output_file = x))
-      opt[Int]("min_words_in_sentence").required()
+      opt[Int]("min_words_in_sentence")
         .text(s"discard the sentences with less that N words" +
           s"  default: ${defaultParams.minWordsPerSentence}")
         .action((x, c) => c.copy(minWordsPerSentence = x))
+      opt[Int]("prune_sentence_threshold")
+        .text(s"threshold on the number of terms for trigger pruning" +
+          s"  default: ${defaultParams.pruneTermsThreshold}")
+        .action((x, c) => c.copy(pruneTermsThreshold = x))
+      opt[Int]("mispell_max_occurrence")
+        .text(s"given a big enough sample, min freq beyond what we consider the token a misspell" +
+          s"  default: ${defaultParams.misspell_max_occurrence}")
+        .action((x, c) => c.copy(misspell_max_occurrence = x))
     }
 
     parser.parse(args, defaultParams) match {

@@ -91,10 +91,11 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     *   Because we want to check that keywords are correctly extracted,
     *   will have tuple like (original words, keywords, bigrams...)
     * @param sentence a sentence as a list of words
+    * @param pruneSentence a threshold on the number of terms for trigger pruning
     * @param minWordsPerSentence the minimum amount of words on each sentence
     * @return the list of most informative words for each sentence
     */
-  def extractInformativeWords(sentence: List[String], minWordsPerSentence: Int = 10):
+  def extractInformativeWords(sentence: List[String], pruneSentence: Int = 100000, minWordsPerSentence: Int = 10):
                       List[(String, Double)] = {
     val pruned = this.pruneSentence(sentence)
     val filtered = if(pruned.length > minWordsPerSentence) pruned else List.empty[String]
@@ -110,15 +111,20 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     */
   def getWordsActivePotentialMap(informativeKeywords: SeqView[List[(String, Double)], Seq[_]]):
               Map[String, Double] = {
+    val informativeKeywordsFrequency = informativeKeywords.flatMap(_.map(_._1))
+      .filter(_.nonEmpty).foldLeft(Map.empty[String, Int]){
+        (count, word) => count + (word -> (count.getOrElse(word, 0) + 1))
+      }
+
     val extractedKeywords: Map[String, Double] =
-      informativeKeywords.flatMap(_.map(_._1)).filter(_.nonEmpty).groupBy(w => w)
-        .view.map(p =>
-         (p._1,
-           Binomial(priorOccurrences.getTokenN + observedOccurrences.getTokenN,
-             observedOccurrences.getOccurrence(p._1) + priorOccurrences.getOccurrence(p._1)
-           ).activePotential(p._2.length)
-         )
-       ).toMap
+      informativeKeywordsFrequency.map(p =>
+        (p._1,
+          Binomial(priorOccurrences.getTokenN + observedOccurrences.getTokenN,
+            observedOccurrences.getOccurrence(p._1) + priorOccurrences.getOccurrence(p._1)
+          ).activePotential(p._2)
+        )
+      )
+
     extractedKeywords
   }
 
@@ -131,7 +137,7 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     */
   def extractBags(activePotentialKeywordsMap: Map[String, Double],
                   informativeKeywords: SeqView[(List[String], List[(String, Double)]), Seq[_]],
-                  misspell_max_occurrence: Int = 5): SeqView[(List[String], Set[String]), Seq[_]] = {
+                  misspell_max_occurrence: Int = 5): SeqView[(List[String], Map[String, Double]), Seq[_]] = {
 
 //    val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(-_._2)
 //    val highest_occurence = extractedKeywordsList.head
@@ -139,12 +145,12 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
 //    val cutoff: Double = Math.min( Math.round(highest_occurence._2 / 100.0), misspell_max_occurrence )
 //      //extractedKeywordsList(extractedKeywordsList.length/cutoff_percentage)._2
 
-    val bags: SeqView[(List[String], Set[String]), Seq[_]] =
-      informativeKeywords.view.map(sentence => {
+    val bags: SeqView[(List[String], Map[String, Double]), Seq[_]] =
+      informativeKeywords.map(sentence => {
         val pruned_sentence_tokens = sentence._1
         val extracted_keywords = sentence._2.map(token =>
-            (token, activePotentialKeywordsMap(token._1)))//.filter(_._2 > cutoff)
-            .map(x => x._1._1).toSet
+            (token, activePotentialKeywordsMap(token._1)))
+            .map(x => x._1).toMap
         (pruned_sentence_tokens, extracted_keywords)
       })
     bags
