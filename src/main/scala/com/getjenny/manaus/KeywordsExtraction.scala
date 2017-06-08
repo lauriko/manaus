@@ -109,13 +109,16 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     * @param informativeKeywords the list of informative words for each sentence
     * @return the map of keywords weighted with active potential
     */
-  def getWordsActivePotentialMap(informativeKeywords: SeqView[List[(String, Double)], Seq[_]]):
+  def getWordsActivePotentialMap(informativeKeywords: Stream[List[(String, Double)]]):
               Map[String, Double] = {
+
+    println("INFO: calculating informative keywords frequency")
     val informativeKeywordsFrequency = informativeKeywords.flatMap(_.map(_._1))
       .filter(_.nonEmpty).foldLeft(Map.empty[String, Int]){
         (count, word) => count + (word -> (count.getOrElse(word, 0) + 1))
       }
 
+    println("INFO: calculating active potential")
     val extractedKeywords: Map[String, Double] =
       informativeKeywordsFrequency.map(p =>
         (p._1,
@@ -136,8 +139,8 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     * @return the final list of keywords for each sentence
     */
   def extractBags(activePotentialKeywordsMap: Map[String, Double],
-                  informativeKeywords: SeqView[(List[String], List[(String, Double)]), Seq[_]],
-                  misspell_max_occurrence: Int = 5): SeqView[(List[String], Map[String, Double]), Seq[_]] = {
+                  informativeKeywords: Stream[(List[String], List[(String, Double)])],
+                  misspell_max_occurrence: Int = 5): Stream[(List[String], Map[String, Double])] = {
 
 //    val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(-_._2)
 //    val highest_occurence = extractedKeywordsList.head
@@ -145,7 +148,7 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
 //    val cutoff: Double = Math.min( Math.round(highest_occurence._2 / 100.0), misspell_max_occurrence )
 //      //extractedKeywordsList(extractedKeywordsList.length/cutoff_percentage)._2
 
-    val bags: SeqView[(List[String], Map[String, Double]), Seq[_]] =
+    val bags: Stream[(List[String], Map[String, Double])] =
       informativeKeywords.map(sentence => {
         val pruned_sentence_tokens = sentence._1
         val extracted_keywords = sentence._2.map(token =>

@@ -8,7 +8,7 @@ import scopt.OptionParser
 import scala.io.Source
 import scala.collection.SeqView
 
-object CalculateKeywordsForSentences {
+object CalculateKeywordsForSentencesSimplerFormat {
 
   private case class Params(
     raw_conversations: String = "data/conversations.txt",
@@ -19,10 +19,11 @@ object CalculateKeywordsForSentences {
     output_file: String = ""
   )
 
-
   def doKeywordExtraction(params: Params): Unit = {
+    // Load the prior occurrences
 
     val cmd_utils = CommandsUtils
+
     val minWordsPerSentence = params.minWordsPerSentence
     val pruneTermsThreshold = params.pruneTermsThreshold
     val misspell_max_occurrence = params.misspell_max_occurrence
@@ -30,7 +31,7 @@ object CalculateKeywordsForSentences {
 
     println("INFO: getting sentences and observedOccurrences")
     val (sentences, observedOccurrences) =
-      cmd_utils.buildObservedOccurrencesMapFromConversationsFormat1(params.raw_conversations)
+      cmd_utils.buildObservedOccurrencesMapFromConversationsFormat2(params.raw_conversations)
 
     println("INFO: extract keywords")
     val keywordsExtraction = new KeywordsExtraction(priorOccurrences=priorOccurrences,
@@ -73,7 +74,7 @@ object CalculateKeywordsForSentences {
       val sentence = item._1
       val bag = item._2
       val keywords = bag._2.toSeq.sortBy(- _._2).map(x => x._1 + "|" + x._2.toString).mkString(" ")
-      IndexedSeq(sentence._1, sentence._3, sentence._4, keywords)
+      IndexedSeq(sentence._1, keywords)
     })
 
     println("INFO: results serialization on file")
