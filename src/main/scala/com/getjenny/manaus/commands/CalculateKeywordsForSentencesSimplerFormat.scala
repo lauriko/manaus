@@ -59,7 +59,7 @@ object CalculateKeywordsForSentencesSimplerFormat {
     // list of the final keywords
     val bags: Stream[(List[String], Map[String, Double])] =
         keywordsExtraction.extractBags(activePotentialKeywordsMap = activePotentialKeywordsMap,
-        informativeKeywords = informativeKeywords, misspell_max_occurrence = misspell_max_occurrence)
+        informativeKeywords = informativeKeywords, misspellMaxOccurrence = misspell_max_occurrence)
 
     /*
     println("Raw Keywords:\n" + sentences.map(_._2).zip(rawBagOfKeywordsInfo).take(100).mkString("\n"))

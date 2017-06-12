@@ -135,12 +135,12 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     *
     * @param activePotentialKeywordsMap map of keywords weighted by active potential (see getWordsActivePotentialMap)
     * @param informativeKeywords the list of informative keywords for each sentence
-    * @param misspell_max_occurrence given a big enough sample, min freq beyond what we consider the token a misspell
+    * @param misspellMaxOccurrence given a big enough sample, min freq beyond what we consider the token a misspell
     * @return the final list of keywords for each sentence
     */
   def extractBags(activePotentialKeywordsMap: Map[String, Double],
                   informativeKeywords: Stream[(List[String], List[(String, Double)])],
-                  misspell_max_occurrence: Int = 5): Stream[(List[String], Map[String, Double])] = {
+                  misspellMaxOccurrence: Int = 5): Stream[(List[String], Map[String, Double])] = {
 
 //    val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(-_._2)
 //    val highest_occurence = extractedKeywordsList.head
