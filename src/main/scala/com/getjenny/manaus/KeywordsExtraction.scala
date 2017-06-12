@@ -124,7 +124,7 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
         (p._1,
           Binomial(priorOccurrences.getTokenN + observedOccurrences.getTokenN,
             observedOccurrences.getOccurrence(p._1) + priorOccurrences.getOccurrence(p._1)
-          ).activePotential(p._2)
+          ).inverseActivePotential(p._2)
         )
       )
 

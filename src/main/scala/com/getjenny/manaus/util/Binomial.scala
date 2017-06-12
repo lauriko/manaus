@@ -18,4 +18,12 @@ case class Binomial(samples: Int, successes: Double) {
     */
   def activePotential(k: Int): Double = -math.log(p) * math.exp(-k)
 
+  /**
+    * If k is the number of times a word appears as keyword, frequent keywords are
+    * promoted, rare keywords (eg misspells and names) are not
+    * @param k
+    * @return
+    */
+  def inverseActivePotential(k: Int): Double = -math.log(p) * math.exp(k)
+
 }
