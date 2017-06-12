@@ -16,7 +16,8 @@ object CalculateKeywordsForSentencesSimplerFormat {
     minWordsPerSentence: Int = 10,
     pruneTermsThreshold: Int = 100000,
     misspell_max_occurrence: Int = 5,
-    output_file: String = ""
+    output_file: String = "",
+    active_potential_decay: Int = 10
   )
 
   def doKeywordExtraction(params: Params): Unit = {
@@ -28,6 +29,7 @@ object CalculateKeywordsForSentencesSimplerFormat {
     val pruneTermsThreshold = params.pruneTermsThreshold
     val misspell_max_occurrence = params.misspell_max_occurrence
     val priorOccurrences = cmd_utils.readPriorOccurrencesMap(params.word_frequencies)
+    val active_potential_decay = params.active_potential_decay
 
     println("INFO: getting sentences and observedOccurrences")
     val (sentences, observedOccurrences) =
@@ -47,7 +49,8 @@ object CalculateKeywordsForSentencesSimplerFormat {
 
     println("INFO: calculating active potentials Map")
     /* Map(keyword -> active potential) */
-    val activePotentialKeywordsMap = keywordsExtraction.getWordsActivePotentialMap(rawBagOfKeywordsInfo)
+    val activePotentialKeywordsMap = keywordsExtraction.getWordsActivePotentialMap(rawBagOfKeywordsInfo,
+      params.active_potential_decay)
 
     println("INFO: getting informative words for sentences")
     val informativeKeywords: Stream[(List[String], List[(String, Double)])] =
@@ -125,6 +128,11 @@ object CalculateKeywordsForSentencesSimplerFormat {
         .text(s"given a big enough sample, min freq beyond what we consider the token a misspell" +
           s"  default: ${defaultParams.misspell_max_occurrence}")
         .action((x, c) => c.copy(misspell_max_occurrence = x))
+      opt[Int]("active_potential_decay")
+        .text(s"introduce a penalty on active potential for words which does not occur enough" +
+          s"  default: ${defaultParams.active_potential_decay}")
+        .action((x, c) => c.copy(active_potential_decay = x))
+
     }
 
     parser.parse(args, defaultParams) match {
