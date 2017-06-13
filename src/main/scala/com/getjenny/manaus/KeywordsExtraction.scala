@@ -150,11 +150,11 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
 
     val bags: Stream[(List[String], Map[String, Double])] =
       informativeKeywords.map(bagOfKeywordsAndScore => {
-        val bagOfKeywords = bagOfKeywordsAndScore._1
+        val bagOfTokens = bagOfKeywordsAndScore._1
         val extractedKeywords = bagOfKeywordsAndScore._2.map(token =>
             (token, activePotentialKeywordsMap(token._1)))
             .map(x => x._1).toMap
-        (bagOfKeywords, extractedKeywords)
+        (bagOfTokens, extractedKeywords)
       })
     bags
   }
