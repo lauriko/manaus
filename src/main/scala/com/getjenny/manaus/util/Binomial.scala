@@ -13,17 +13,17 @@ case class Binomial(samples: Int, successes: Double) {
   def rightSurprise(n: Int, k: Int): Double = math.max(0.0, -math.log(areaFromEnd(n, k) * 2.0) / math.log(2.0))
 
   /**
-    * Active potential is defined as the surprise associated to `p`, i.e. `-log_2(p)`,
-    * with an exponential decay for each occurrence
-    */
-  def activePotential(k: Int): Double = -math.log(p) * math.exp(-k)
-
-  /**
     * If k is the number of times a word appears as keyword, frequent keywords are
     * promoted, rare keywords (eg misspells and names) are not
     * @param k
     * @return
     */
   def inverseActivePotential(k: Int): Double = -math.log(p) * math.exp(k)
+
+  /**
+    * Active potential is defined as the surprise associated to penalize words which
+    * doesn't occur enough
+    */
+  def activePotential(k: Int, d: Int = 10): Double = 1 - math.exp(-k/d)
 
 }

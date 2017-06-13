@@ -109,7 +109,7 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     * @param informativeKeywords the list of informative words for each sentence
     * @return the map of keywords weighted with active potential
     */
-  def getWordsActivePotentialMap(informativeKeywords: Stream[List[(String, Double)]]):
+  def getWordsActivePotentialMap(informativeKeywords: Stream[List[(String, Double)]], decay: Int=10):
               Map[String, Double] = {
 
     println("INFO: calculating informative keywords frequency")
@@ -120,13 +120,14 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
 
     println("INFO: calculating active potential")
     val extractedKeywords: Map[String, Double] =
-      informativeKeywordsFrequency.map(p =>
-        (p._1,
+      informativeKeywordsFrequency.map(p => {
+        val pair = (p._1,
           Binomial(priorOccurrences.getTokenN + observedOccurrences.getTokenN,
             observedOccurrences.getOccurrence(p._1) + priorOccurrences.getOccurrence(p._1)
-          ).inverseActivePotential(p._2)
+          ).activePotential(p._2, decay)
         )
-      )
+        pair
+      })
 
     extractedKeywords
   }
@@ -150,14 +151,12 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
 
     val bags: Stream[(List[String], Map[String, Double])] =
       informativeKeywords.map(bagOfKeywordsAndScore => {
-        val bagOfTokens = bagOfKeywordsAndScore._1
+        val bagOfKeywords = bagOfKeywordsAndScore._1
         val extractedKeywords = bagOfKeywordsAndScore._2.map(token =>
-            (token, activePotentialKeywordsMap(token._1)))
-            .map(x => x._1).toMap
-        (bagOfTokens, extractedKeywords)
+            (token._1, token._2 * activePotentialKeywordsMap(token._1))).toMap
+        (bagOfKeywords, extractedKeywords)
       })
     bags
   }
-
 
 }
