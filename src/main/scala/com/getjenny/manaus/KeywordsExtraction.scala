@@ -39,7 +39,8 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     */
   class Sentence(sentence_tokens: List[String],
                  minSentenceInfoBit: Int = 32,
-                 minKeywordInfo: Int = 8
+                 minKeywordInfo: Int = 8,
+                 totalInformationNorm: Boolean = false
                 ) {
     val localOccurrences: Map[String, Int] =
       sentence_tokens.groupBy(identity).mapValues(_.length)
@@ -59,14 +60,25 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
       *
       * @return List of words with high information (keywords) and associated information
       */
-    def keywords: List[(String, Double)]  = {
+    def keywordsNotNorm: List[(String, Double)]  = {
       if (totalInformation <= minSentenceInfoBit)
         List()
       else
-//        wordsInfo.filter(x => x._2 > minKeywordInfo).mapValues(_/totalInformation).toList.sortBy(-_._2)
-      //TODO trying without /totalInformation
         wordsInfo.filter(x => x._2 > minKeywordInfo).mapValues(_.toDouble).toList.sortBy(-_._2)
     }
+
+    /**
+      *
+      * @return List of words with high information (keywords) and associated information
+      */
+    def keywordsNormTotalInfo: List[(String, Double)]  = {
+      if (totalInformation <= minSentenceInfoBit)
+        List()
+      else
+        wordsInfo.filter(x => x._2 > minKeywordInfo).mapValues(_/totalInformation).toList.sortBy(-_._2)
+    }
+
+    def keywords = if (totalInformationNorm) keywordsNormTotalInfo else keywordsNotNorm
   }
 
   /** Clean a list of tokens e.g. No words with two letters,
@@ -95,11 +107,13 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     * @param minWordsPerSentence the minimum amount of words on each sentence
     * @return the list of most informative words for each sentence
     */
-  def extractInformativeWords(sentence: List[String], pruneSentence: Int = 100000, minWordsPerSentence: Int = 10):
+  def extractInformativeWords(sentence: List[String], pruneSentence: Int = 100000, minWordsPerSentence: Int = 10,
+                              totalInformationNorm: Boolean):
                       List[(String, Double)] = {
     val pruned = this.pruneSentence(sentence)
     val filtered = if(pruned.length > minWordsPerSentence) pruned else List.empty[String]
-    val keywords = if(filtered.nonEmpty) new Sentence(filtered).keywords else List.empty[(String, Double)]
+    val keywords = if(filtered.nonEmpty) new Sentence(sentence_tokens = filtered,
+      totalInformationNorm = totalInformationNorm).keywords else List.empty[(String, Double)]
     keywords
   }
 
@@ -132,14 +146,39 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
     extractedKeywords
   }
 
-  /** extract the final keywords
+  /** extract the final keywords without active potential weighting
+    *
+    * @param informativeKeywords the list of informative keywords for each sentence
+    * @param misspellMaxOccurrence given a big enough sample, min freq beyond what we consider the token a misspell
+    * @return the final list of keywords for each sentence
+    */
+  def extractBagsNoActive(informativeKeywords: Stream[(List[String], List[(String, Double)])],
+                  misspellMaxOccurrence: Int = 5): Stream[(List[String], Map[String, Double])] = {
+
+//    val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(-_._2)
+//    val highest_occurence = extractedKeywordsList.head
+//    println("DEBUG: highest_occurence " + highest_occurence)
+//    val cutoff: Double = Math.min( Math.round(highest_occurence._2 / 100.0), misspell_max_occurrence )
+//      //extractedKeywordsList(extractedKeywordsList.length/cutoff_percentage)._2
+
+    val bags: Stream[(List[String], Map[String, Double])] =
+      informativeKeywords.map(bagOfKeywordsAndScore => {
+        val bagOfKeywords = bagOfKeywordsAndScore._1
+        val extractedKeywords = bagOfKeywordsAndScore._2.map(token =>
+            (token._1, token._2)).toMap
+        (bagOfKeywords, extractedKeywords)
+      })
+    bags
+  }
+
+  /** extract the final keywords with active potential weighting
     *
     * @param activePotentialKeywordsMap map of keywords weighted by active potential (see getWordsActivePotentialMap)
     * @param informativeKeywords the list of informative keywords for each sentence
     * @param misspellMaxOccurrence given a big enough sample, min freq beyond what we consider the token a misspell
     * @return the final list of keywords for each sentence
     */
-  def extractBags(activePotentialKeywordsMap: Map[String, Double],
+  def extractBagsActive(activePotentialKeywordsMap: Map[String, Double],
                   informativeKeywords: Stream[(List[String], List[(String, Double)])],
                   misspellMaxOccurrence: Int = 5): Stream[(List[String], Map[String, Double])] = {
 

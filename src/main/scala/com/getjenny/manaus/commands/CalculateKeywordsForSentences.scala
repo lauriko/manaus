@@ -16,7 +16,10 @@ object CalculateKeywordsForSentences {
     minWordsPerSentence: Int = 10,
     pruneTermsThreshold: Int = 100000,
     misspell_max_occurrence: Int = 5,
-    output_file: String = ""
+    output_file: String = "",
+    active_potential_decay: Int = 10,
+    total_info: Boolean = false,
+    active_potential: Boolean = true
   )
 
 
@@ -39,14 +42,16 @@ object CalculateKeywordsForSentences {
     println("INFO: extract informativeWords")
     /* Informative words */
     val rawBagOfKeywordsInfo: Stream[List[(String, Double)]] = sentences.map(sentence => {
-      val informativeK = keywordsExtraction.extractInformativeWords(sentence._2,
-        pruneTermsThreshold, minWordsPerSentence)
+      val informativeK = keywordsExtraction.extractInformativeWords(sentence = sentence._2,
+        pruneSentence = pruneTermsThreshold, minWordsPerSentence = minWordsPerSentence,
+        totalInformationNorm = params.total_info)
       informativeK
     })
 
     println("INFO: calculating active potentials Map")
     /* Map(keyword -> active potential) */
-    val activePotentialKeywordsMap = keywordsExtraction.getWordsActivePotentialMap(rawBagOfKeywordsInfo)
+    val activePotentialKeywordsMap = keywordsExtraction.getWordsActivePotentialMap(rawBagOfKeywordsInfo,
+      params.active_potential_decay)
 
     println("INFO: getting informative words for sentences")
     val informativeKeywords: Stream[(List[String], List[(String, Double)])] =
@@ -57,8 +62,14 @@ object CalculateKeywordsForSentences {
     println("INFO: calculating bags")
     // list of the final keywords
     val bags: Stream[(List[String], Map[String, Double])] =
-        keywordsExtraction.extractBags(activePotentialKeywordsMap = activePotentialKeywordsMap,
-        informativeKeywords = informativeKeywords, misspellMaxOccurrence = misspell_max_occurrence)
+      if(params.active_potential) {
+        keywordsExtraction.extractBagsActive(activePotentialKeywordsMap = activePotentialKeywordsMap,
+          informativeKeywords = informativeKeywords, misspellMaxOccurrence = misspell_max_occurrence)
+      } else {
+        keywordsExtraction.extractBagsNoActive(informativeKeywords = informativeKeywords,
+          misspellMaxOccurrence = misspell_max_occurrence)
+      }
+
 
     /*
     println("Raw Keywords:\n" + sentences.map(_._2).zip(rawBagOfKeywordsInfo).take(100).mkString("\n"))
@@ -124,6 +135,18 @@ object CalculateKeywordsForSentences {
         .text(s"given a big enough sample, min freq beyond what we consider the token a misspell" +
           s"  default: ${defaultParams.misspell_max_occurrence}")
         .action((x, c) => c.copy(misspell_max_occurrence = x))
+      opt[Int]("active_potential_decay")
+        .text(s"introduce a penalty on active potential for words which does not occur enough" +
+          s"  default: ${defaultParams.active_potential_decay}")
+        .action((x, c) => c.copy(active_potential_decay = x))
+      opt[Boolean]("total_info")
+        .text(s"normalize the information by total informations" +
+          s"  default: ${defaultParams.total_info}")
+        .action((x, c) => c.copy(total_info = x))
+      opt[Boolean]("active_potential")
+        .text(s"weight bags with active potential" +
+          s"  default: ${defaultParams.active_potential}")
+        .action((x, c) => c.copy(active_potential = x))
     }
 
     parser.parse(args, defaultParams) match {

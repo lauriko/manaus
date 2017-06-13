@@ -17,7 +17,9 @@ object CalculateKeywordsForSentencesSimplerFormat {
     pruneTermsThreshold: Int = 100000,
     misspell_max_occurrence: Int = 5,
     output_file: String = "",
-    active_potential_decay: Int = 10
+    active_potential_decay: Int = 10,
+    total_info: Boolean = false,
+    active_potential: Boolean = true
   )
 
   def doKeywordExtraction(params: Params): Unit = {
@@ -42,8 +44,9 @@ object CalculateKeywordsForSentencesSimplerFormat {
     println("INFO: extract informativeWords")
     /* Informative words */
     val rawBagOfKeywordsInfo: Stream[List[(String, Double)]] = sentences.map(sentence => {
-      val informativeK = keywordsExtraction.extractInformativeWords(sentence._2,
-        pruneTermsThreshold, minWordsPerSentence)
+      val informativeK = keywordsExtraction.extractInformativeWords(sentence = sentence._2,
+        pruneSentence = pruneTermsThreshold, minWordsPerSentence = minWordsPerSentence,
+        totalInformationNorm = params.total_info)
       informativeK
     })
 
@@ -61,8 +64,13 @@ object CalculateKeywordsForSentencesSimplerFormat {
     println("INFO: calculating bags")
     // list of the final keywords
     val bags: Stream[(List[String], Map[String, Double])] =
-        keywordsExtraction.extractBags(activePotentialKeywordsMap = activePotentialKeywordsMap,
-        informativeKeywords = informativeKeywords, misspellMaxOccurrence = misspell_max_occurrence)
+      if(params.active_potential) {
+        keywordsExtraction.extractBagsActive(activePotentialKeywordsMap = activePotentialKeywordsMap,
+          informativeKeywords = informativeKeywords, misspellMaxOccurrence = misspell_max_occurrence)
+      } else {
+        keywordsExtraction.extractBagsNoActive(informativeKeywords = informativeKeywords,
+          misspellMaxOccurrence = misspell_max_occurrence)
+      }
 
     /*
     println("Raw Keywords:\n" + sentences.map(_._2).zip(rawBagOfKeywordsInfo).take(100).mkString("\n"))
@@ -132,7 +140,14 @@ object CalculateKeywordsForSentencesSimplerFormat {
         .text(s"introduce a penalty on active potential for words which does not occur enough" +
           s"  default: ${defaultParams.active_potential_decay}")
         .action((x, c) => c.copy(active_potential_decay = x))
-
+      opt[Boolean]("total_info")
+        .text(s"normalize the information by total informations" +
+          s"  default: ${defaultParams.total_info}")
+        .action((x, c) => c.copy(total_info = x))
+      opt[Boolean]("active_potential")
+        .text(s"weight bags with active potential" +
+          s"  default: ${defaultParams.active_potential}")
+        .action((x, c) => c.copy(active_potential = x))
     }
 
     parser.parse(args, defaultParams) match {
