@@ -8,7 +8,7 @@ resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/re
   Resolver.bintrayRepo("hseeberger", "maven"))
 
 libraryDependencies ++= {
-  val ESClientVersion   = "5.3.2"
+  val ESClientVersion   = "5.4.2"
   Seq(
     "org.scalatest" %% "scalatest" % "3.0.1" % "test",
     "org.scalanlp" %% "breeze" % "0.13",
