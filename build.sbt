@@ -1,4 +1,5 @@
 import NativePackagerHelper._
+import com.typesafe.sbt.packager.docker._
 
 name := "manaus"
 
@@ -28,6 +29,15 @@ scalacOptions += "-feature"
 
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(GitVersioning)
+enablePlugins(DockerPlugin)
+
+dockerCommands := Seq(
+  Cmd("FROM", "java:8"),
+  Cmd("LABEL", "maintainer=\"Angelo Leto <angelo@getjenny.com>\""),
+  Cmd("LABEL", "description=\"Docker container for Manaus NLP services\""),
+  Cmd("USER", "daemon"),
+  Cmd("ADD", "/opt/docker", "/manaus")
+)
 
 // Assembly settings
 assemblyMergeStrategy in assembly := {

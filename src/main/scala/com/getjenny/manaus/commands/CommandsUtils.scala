@@ -140,7 +140,7 @@ object CommandsUtils {
       hits
     }).takeWhile(_.length != 0).flatten.map(hit => {
       val id = hit.getId
-      val analyzed_tokens = hit.fields.get("analyzed_tokens").asScala.map(x => {
+      val analyzed_tokens = hit.getFields.get("analyzed_tokens").asScala.map(x => {
         val token = x.asInstanceOf[String]
         token
       })
