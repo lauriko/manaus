@@ -31,6 +31,7 @@ enablePlugins(JavaServerAppPackaging)
 enablePlugins(GitVersioning)
 enablePlugins(DockerPlugin)
 
+//http://www.scala-sbt.org/sbt-native-packager/formats/docker.html
 dockerCommands := Seq(
   Cmd("FROM", "java:8"),
   Cmd("LABEL", "maintainer=\"Angelo Leto <angelo@getjenny.com>\""),
