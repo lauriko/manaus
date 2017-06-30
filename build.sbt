@@ -30,6 +30,7 @@ scalacOptions += "-feature"
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(GitVersioning)
 enablePlugins(DockerPlugin)
+enablePlugins(GitBranchPrompt)
 
 //http://www.scala-sbt.org/sbt-native-packager/formats/docker.html
 dockerCommands := Seq(
