@@ -47,7 +47,7 @@ sbt sbt docker:publish
 
 docker tag elegansio/manaus:<tag name> elegansio/manaus:latest
 
-docker push elegansio/manau:latest
+docker push elegansio/manaus:latest
 
 ### run commands from docker container
 
