@@ -28,6 +28,9 @@ scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
 enablePlugins(GitVersioning)
+enablePlugins(GitBranchPrompt)
+git.useGitDescribe := true
+
 enablePlugins(JavaServerAppPackaging)
 enablePlugins(UniversalPlugin)
 enablePlugins(DockerPlugin)
