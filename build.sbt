@@ -28,11 +28,10 @@ scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
 enablePlugins(GitVersioning)
+enablePlugins(JavaServerAppPackaging)
 enablePlugins(UniversalPlugin)
 enablePlugins(DockerPlugin)
 enablePlugins(GitBranchPrompt)
-
-git.useGitDescribe := true
 
 //http://www.scala-sbt.org/sbt-native-packager/formats/docker.html
 dockerCommands := Seq(
@@ -42,6 +41,10 @@ dockerCommands := Seq(
   Cmd("USER", "daemon"),
   Cmd("ADD", "/opt/docker", "/manaus")
 )
+
+packageName in Docker := packageName.value
+version in Docker := version.value
+dockerRepository := Some("elegansio")
 
 // Assembly settings
 assemblyMergeStrategy in assembly := {
