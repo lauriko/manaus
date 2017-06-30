@@ -27,8 +27,8 @@ libraryDependencies ++= {
 scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
-enablePlugins(JavaServerAppPackaging)
 enablePlugins(GitVersioning)
+enablePlugins(UniversalPlugin)
 enablePlugins(DockerPlugin)
 enablePlugins(GitBranchPrompt)
 
