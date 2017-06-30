@@ -32,6 +32,8 @@ enablePlugins(UniversalPlugin)
 enablePlugins(DockerPlugin)
 enablePlugins(GitBranchPrompt)
 
+git.useGitDescribe := true
+
 //http://www.scala-sbt.org/sbt-native-packager/formats/docker.html
 dockerCommands := Seq(
   Cmd("FROM", "java:8"),
