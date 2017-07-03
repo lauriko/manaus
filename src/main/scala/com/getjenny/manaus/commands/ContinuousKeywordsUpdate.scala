@@ -65,6 +65,7 @@ object ContinuousKeywordsUpdate extends LazyLogging {
       logger.info("data serialization on file")
       val token_temp_file_name = "__data_raw_conversations.csv"
       val token_data_output_file = new File(params.temp_data_folder + "/" + token_temp_file_name)
+      token_data_output_file.createNewFile()
       val token_data_file_writer = new FileWriter(token_data_output_file)
 
       //sentence, type, conv_id, sentence_id
@@ -102,6 +103,7 @@ object ContinuousKeywordsUpdate extends LazyLogging {
       logger.info("results serialization on file")
       val keywords_temp_file_name = "__data_keywords.csv"
       val keywords_output_file = new File(params.temp_data_folder + "/" + keywords_temp_file_name)
+      keywords_output_file.createNewFile()
       val keywords_file_writer = new FileWriter(keywords_output_file)
 
       //sentence, type, conv_id, sentence_id
