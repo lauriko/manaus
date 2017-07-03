@@ -5,7 +5,9 @@ import java.io.{File, FileWriter}
 import breeze.io.CSVWriter
 import scopt.OptionParser
 
-object GetDatasetFromES {
+import com.typesafe.scalalogging.LazyLogging
+
+object GetDatasetFromES extends LazyLogging {
 
   private case class Params(
     output_file: String = "",
@@ -22,7 +24,7 @@ object GetDatasetFromES {
 
     val cmd_utils = CommandsUtils
 
-    val elastic_client = ElasticClient(type_name=params.type_name,
+    val elastic_client = ElasticClientKB(type_name=params.type_name,
       query_min_threshold = params.query_min_threshold, index_name = params.index_name,
       cluster_name = params.cluster_name, ignore_cluster_name = params.ignore_cluster_name,
       index_language = params.index_name, host_map = params.host_map)

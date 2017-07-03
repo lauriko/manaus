@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+  <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <file>manaus/log/manaus.log</file>
+
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+      <fileNamePattern>manaus/log/manaus.%d{dd-MM-yyyy}.log</fileNamePattern>
+      <maxHistory>512</maxHistory>
+    </rollingPolicy>
+
+    <encoder>
+      <pattern>%date{ISO8601} [%t] %-5level %logger{36} - %msg%n</pattern>
+    </encoder>
+  </appender>
+
+  <root level="DEBUG">
+    <appender-ref ref="FILE"/>
+  </root>
+</configuration>

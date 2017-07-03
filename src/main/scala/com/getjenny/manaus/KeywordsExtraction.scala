@@ -1,6 +1,8 @@
 package com.getjenny.manaus
 
 import com.getjenny.manaus.util.Binomial
+import com.typesafe.scalalogging.LazyLogging
+
 import scala.collection.SeqView
 
 
@@ -32,7 +34,7 @@ import scala.collection.SeqView
   *
   */
 class KeywordsExtraction(priorOccurrences: TokensOccurrences,
-                         observedOccurrences: TokensOccurrences) {
+                         observedOccurrences: TokensOccurrences) extends LazyLogging {
 
   /**
     * @param sentence_tokens list of sentence tokens
@@ -126,13 +128,13 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
   def getWordsActivePotentialMap(informativeKeywords: Stream[List[(String, Double)]], decay: Int=10):
               Map[String, Double] = {
 
-    println("INFO: calculating informative keywords frequency")
+    logger.info("calculating informative keywords frequency")
     val informativeKeywordsFrequency = informativeKeywords.flatMap(_.map(_._1))
       .filter(_.nonEmpty).foldLeft(Map.empty[String, Int]){
         (count, word) => count + (word -> (count.getOrElse(word, 0) + 1))
       }
 
-    println("INFO: calculating active potential")
+    logger.info("calculating active potential")
     val extractedKeywords: Map[String, Double] =
       informativeKeywordsFrequency.map(p => {
         val pair = (p._1,
@@ -157,7 +159,7 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
 
 //    val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(-_._2)
 //    val highest_occurence = extractedKeywordsList.head
-//    println("DEBUG: highest_occurence " + highest_occurence)
+//    logger.debug("highest_occurence " + highest_occurence)
 //    val cutoff: Double = Math.min( Math.round(highest_occurence._2 / 100.0), misspell_max_occurrence )
 //      //extractedKeywordsList(extractedKeywordsList.length/cutoff_percentage)._2
 
@@ -184,7 +186,7 @@ class KeywordsExtraction(priorOccurrences: TokensOccurrences,
 
 //    val extractedKeywordsList = activePotentialKeywordsMap.toList.sortBy(-_._2)
 //    val highest_occurence = extractedKeywordsList.head
-//    println("DEBUG: highest_occurence " + highest_occurence)
+//    logger.debug("highest_occurence " + highest_occurence)
 //    val cutoff: Double = Math.min( Math.round(highest_occurence._2 / 100.0), misspell_max_occurrence )
 //      //extractedKeywordsList(extractedKeywordsList.length/cutoff_percentage)._2
 

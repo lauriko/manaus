@@ -12,7 +12,7 @@ object CalculateKeywordsForSentencesSimplerFormat {
 
   private case class Params(
     raw_conversations: String = "data/conversations.txt",
-    word_frequencies: String = "data/word_frequency.tsv",
+    word_frequencies: String = "data/english/word_frequency.tsv",
     minWordsPerSentence: Int = 10,
     pruneTermsThreshold: Int = 100000,
     misspell_max_occurrence: Int = 5,
@@ -32,52 +32,18 @@ object CalculateKeywordsForSentencesSimplerFormat {
     val misspell_max_occurrence = params.misspell_max_occurrence
     val priorOccurrences = cmd_utils.readPriorOccurrencesMap(params.word_frequencies)
     val active_potential_decay = params.active_potential_decay
+    val active_potential = params.active_potential
+    val total_info = params.total_info
 
     println("INFO: getting sentences and observedOccurrences")
     val (sentences, observedOccurrences) =
       cmd_utils.buildObservedOccurrencesMapFromConversationsFormat2(params.raw_conversations)
 
-    println("INFO: extract keywords")
-    val keywordsExtraction = new KeywordsExtraction(priorOccurrences=priorOccurrences,
-      observedOccurrences=observedOccurrences)
-
-    println("INFO: extract informativeWords")
-    /* Informative words */
-    val rawBagOfKeywordsInfo: Stream[List[(String, Double)]] = sentences.map(sentence => {
-      val informativeK = keywordsExtraction.extractInformativeWords(sentence = sentence._2,
-        pruneSentence = pruneTermsThreshold, minWordsPerSentence = minWordsPerSentence,
-        totalInformationNorm = params.total_info)
-      informativeK
-    })
-
-    println("INFO: calculating active potentials Map")
-    /* Map(keyword -> active potential) */
-    val activePotentialKeywordsMap = keywordsExtraction.getWordsActivePotentialMap(rawBagOfKeywordsInfo,
-      params.active_potential_decay)
-
-    println("INFO: getting informative words for sentences")
-    val informativeKeywords: Stream[(List[String], List[(String, Double)])] =
-      sentences.zip(rawBagOfKeywordsInfo).map(sentence => {
-      (sentence._1._2, sentence._2)
-    })
-
-    println("INFO: calculating bags")
-    // list of the final keywords
-    val bags: Stream[(List[String], Map[String, Double])] =
-      if(params.active_potential) {
-        keywordsExtraction.extractBagsActive(activePotentialKeywordsMap = activePotentialKeywordsMap,
-          informativeKeywords = informativeKeywords, misspellMaxOccurrence = misspell_max_occurrence)
-      } else {
-        keywordsExtraction.extractBagsNoActive(informativeKeywords = informativeKeywords,
-          misspellMaxOccurrence = misspell_max_occurrence)
-      }
-
-    /*
-    println("Raw Keywords:\n" + sentences.map(_._2).zip(rawBagOfKeywordsInfo).take(100).mkString("\n"))
-    println("Total Extracted Keywords: " + activePotentialKeywordsMap.toList.length)
-    println("Extracted Keywords:\n" + activePotentialKeywordsMap.take(500))
-    println("Clean Keywords:\n" + bags.toList)
-    */
+    val bags =  cmd_utils.extractKeywords(sentences = sentences, observedOccurrences = observedOccurrences,
+                  minWordsPerSentence = minWordsPerSentence,
+                  pruneTermsThreshold = pruneTermsThreshold , misspell_max_occurrence = misspell_max_occurrence,
+                  priorOccurrences = priorOccurrences, active_potential_decay = active_potential_decay,
+                  active_potential = active_potential, total_info = total_info)
 
     println("INFO: merging sentences with bags")
 

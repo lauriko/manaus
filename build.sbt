@@ -19,7 +19,8 @@ libraryDependencies ++= {
     "org.elasticsearch.client" % "rest" % ESClientVersion,
     "org.apache.logging.log4j" % "log4j-api" % "2.7",
     "org.apache.logging.log4j" % "log4j-core" % "2.7",
-    "ch.qos.logback"    %  "logback-classic" % "1.1.3",
+    "ch.qos.logback"    %  "logback-classic" % "1.2.3",
+    "com.typesafe.scala-logging" %% "scala-logging" % "3.6.0",
     "com.github.scopt" %% "scopt" % "3.5.0"
   )
 }
@@ -40,17 +41,22 @@ dockerCommands := Seq(
   Cmd("FROM", "java:8"),
   Cmd("LABEL", "maintainer=\"Angelo Leto <angelo@getjenny.com>\""),
   Cmd("LABEL", "description=\"Docker container for Manaus NLP services\""),
-  Cmd("USER", "daemon"),
-  Cmd("ADD", "/opt/docker", "/manaus")
+  Cmd("WORKDIR", "/"),
+  Cmd("ADD", "/opt/docker", "/manaus"),
+  Cmd("VOLUME", "/manaus/data"),
+  Cmd("VOLUME", "/manaus/log")
 )
 
 packageName in Docker := packageName.value
 version in Docker := version.value
 dockerRepository := Some("elegansio")
 
+mappings in Universal ++= {
+  contentOf("src/main/resources").toMap.mapValues("config/" + _).toSeq
+}
+
 // Assembly settings
 assemblyMergeStrategy in assembly := {
   case PathList("META-INF", xs @ _*) => MergeStrategy.discard
   case x => MergeStrategy.first
 }
-
