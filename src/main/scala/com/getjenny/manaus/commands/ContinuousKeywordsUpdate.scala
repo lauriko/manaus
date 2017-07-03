@@ -24,7 +24,7 @@ object ContinuousKeywordsUpdate extends LazyLogging {
   private case class Params(
                              interval_sec: Int = 7200,
                              temp_data_folder: String = "data",
-                             word_frequencies: String = "data/english/word_frequency.tsv",
+                             word_frequencies: String = "statistics_data/english/word_frequency.tsv",
                              minWordsPerSentence: Int = 10,
                              pruneTermsThreshold: Int = 100000,
                              misspell_max_occurrence: Int = 5,

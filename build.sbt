@@ -52,7 +52,7 @@ version in Docker := version.value
 dockerRepository := Some("elegansio")
 
 mappings in Universal ++= {
-  directory("data") ++
+  directory("statistics_data") ++
   contentOf("src/main/resources").toMap.mapValues("config/" + _).toSeq
 }
 

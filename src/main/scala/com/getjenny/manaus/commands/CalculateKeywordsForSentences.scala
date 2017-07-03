@@ -12,7 +12,7 @@ object CalculateKeywordsForSentences {
 
   private case class Params(
     raw_conversations: String = "data/conversations.txt",
-    word_frequencies: String = "data/english/word_frequency.tsv",
+    word_frequencies: String = "statistics_data/english/word_frequency.tsv",
     minWordsPerSentence: Int = 10,
     pruneTermsThreshold: Int = 100000,
     misspell_max_occurrence: Int = 5,
