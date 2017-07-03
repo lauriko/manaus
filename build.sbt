@@ -39,6 +39,8 @@ git.useGitDescribe := true
 //http://www.scala-sbt.org/sbt-native-packager/formats/docker.html
 dockerCommands := Seq(
   Cmd("FROM", "java:8"),
+  Cmd("RUN", "apt", "update"),
+  Cmd("RUN", "apt", "install", "-y", "netcat"),
   Cmd("LABEL", "maintainer=\"Angelo Leto <angelo@getjenny.com>\""),
   Cmd("LABEL", "description=\"Docker container for Manaus NLP services\""),
   Cmd("WORKDIR", "/"),

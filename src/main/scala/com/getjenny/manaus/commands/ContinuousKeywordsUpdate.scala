@@ -55,9 +55,10 @@ object ContinuousKeywordsUpdate extends LazyLogging {
       cluster_name = params.cluster_name, ignore_cluster_name = params.ignore_cluster_name,
       index_language = params.index_name, host_map = params.host_map)
     val search_hits = cmd_utils.searchAndGetTokens(elastic_client = elastic_client, field_name = params.field_name)
+    var counter = 0
 
     do {
-
+      logger.info("Update manaus keyword, cycle: " + counter)
       def out_data = search_hits.map(hit => {
         IndexedSeq[String](hit._1.mkString(" "), hit._2)
       })
