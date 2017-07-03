@@ -16,6 +16,6 @@ do
   sleep 1
 done
 
-echo "Postgres is up - executing command"
+echo "Service is up - executing command"
 exec $cmd
 
