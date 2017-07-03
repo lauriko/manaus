@@ -59,6 +59,7 @@ object ContinuousKeywordsUpdate extends LazyLogging {
 
     do {
       logger.info("Update manaus keyword, cycle: " + counter)
+      counter += 1
       def out_data = search_hits.map(hit => {
         IndexedSeq[String](hit._1.mkString(" "), hit._2)
       })
