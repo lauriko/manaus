@@ -11,6 +11,7 @@ import java.io.{File, FileReader, FileWriter}
 
 import com.getjenny.manaus.commands.UploadKeywords.logger
 import com.typesafe.scalalogging.LazyLogging
+import org.elasticsearch.index.IndexNotFoundException
 import scopt.OptionParser
 
 import scala.concurrent.duration._
@@ -54,7 +55,17 @@ object ContinuousKeywordsUpdate extends LazyLogging {
       query_min_threshold = params.query_min_threshold, index_name = params.index_name,
       cluster_name = params.cluster_name, ignore_cluster_name = params.ignore_cluster_name,
       index_language = params.index_name, host_map = params.host_map)
-    val search_hits = cmd_utils.searchAndGetTokens(elastic_client = elastic_client, field_name = params.field_name)
+
+    val search_hits = try {
+      cmd_utils.searchAndGetTokens(elastic_client = elastic_client, field_name = params.field_name)
+    } catch {
+        case e : IndexNotFoundException =>
+          val message = "The index was not found or was not yet initialized: " + e.getMessage
+          println(message)
+          logger.error(message)
+          sys.exit(201)
+    }
+
     var counter = 0
 
     do {
