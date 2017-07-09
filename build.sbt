@@ -17,8 +17,8 @@ libraryDependencies ++= {
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "org.elasticsearch.client" % "transport" % ESClientVersion,
     "org.elasticsearch.client" % "rest" % ESClientVersion,
-    "org.apache.logging.log4j" % "log4j-api" % "2.7",
-    "org.apache.logging.log4j" % "log4j-core" % "2.7",
+    "org.apache.logging.log4j" % "log4j-api" % "2.8.2",
+    "org.apache.logging.log4j" % "log4j-core" % "2.8.2",
     "ch.qos.logback"    %  "logback-classic" % "1.2.3",
     "com.typesafe.scala-logging" %% "scala-logging" % "3.6.0",
     "com.github.scopt" %% "scopt" % "3.5.0"
