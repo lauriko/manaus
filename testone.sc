@@ -1,6 +1,5 @@
-import com.getjenny.manaus.Conversations
+import com.getjenny.manaus.KeywordsExtraction
 import com.getjenny.manaus.util.Bags
-import com.getjenny.manaus.util.tokenizer
 
 object testone {
 
