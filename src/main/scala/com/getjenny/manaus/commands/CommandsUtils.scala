@@ -25,8 +25,8 @@ object CommandsUtils extends LazyLogging {
                               wordColumn: Int = 1, occurrenceColumn: Int = 2): TokensOccurrences = {
     val priorOccurrencesMap: Map[String, Int] = Source.fromFile(word_frequencies).getLines
       .map(line => {
-        val splitted_line = line.split("\t")
-        splitted_line(wordColumn).toLowerCase -> line.split("\t")(occurrenceColumn).toInt
+        val split_line = line.split("\t")
+        split_line(wordColumn).toLowerCase -> line.split("\t")(occurrenceColumn).toInt
       }).toMap.withDefaultValue(0)
 
     val priorOccurrences = new PriorTokensOccurrencesMap(priorOccurrencesMap)
