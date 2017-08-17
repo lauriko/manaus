@@ -3,7 +3,7 @@ import com.typesafe.sbt.packager.docker._
 
 name := "manaus"
 
-scalaVersion := "2.12.1"
+scalaVersion := "2.12.2"
 
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
   Resolver.bintrayRepo("hseeberger", "maven"))
@@ -21,7 +21,7 @@ libraryDependencies ++= {
     "org.apache.logging.log4j" % "log4j-core" % "2.8.2",
     "ch.qos.logback"    %  "logback-classic" % "1.2.3",
     "com.typesafe.scala-logging" %% "scala-logging" % "3.6.0",
-    "com.github.scopt" %% "scopt" % "3.5.0"
+    "com.github.scopt" %% "scopt" % "3.6.0"
   )
 }
 
