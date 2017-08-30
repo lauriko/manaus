@@ -45,6 +45,8 @@ object ContinuousKeywordsUpdate extends LazyLogging {
                            )
 
   def doContinuousKeywordsUpdate(params: Params): Unit = {
+    logger.info("Parameters: " + params.toString)
+
     // Load the prior occurrences
     val cmd_utils = CommandsUtils
 
@@ -69,6 +71,7 @@ object ContinuousKeywordsUpdate extends LazyLogging {
     var counter = 0
 
     do {
+
       logger.info("Update manaus keyword, cycle: " + counter)
       counter += 1
       def out_data = search_hits.map(hit => {
