@@ -11,7 +11,15 @@
     </rollingPolicy>
 
     <encoder>
-        <pattern>%date{ISO8601} >%X{akkaTimestamp} %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
+        <pattern>%contextName %date{ISO8601} >%X{akkaTimestamp} %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
+    </encoder>
+</appender>
+
+<contextName>${HOSTNAME}</contextName>
+
+<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder>
+        <pattern>%contextName %date{ISO8601} >%X{akkaTimestamp} %-5level %logger{36} %X{akkaSource} - %msg%n</pattern>
     </encoder>
 </appender>
 
@@ -26,8 +34,9 @@
   </appender>
 -->
 <root level="DEBUG">
-    <appender-ref ref="FILE"/>
+    <appender-ref ref="STDOUT" />
     <!--
+        <appender-ref ref="FILE"/>
         <appender-ref ref="SYSLOG"/>
     -->
 </root>
