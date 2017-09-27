@@ -44,13 +44,13 @@ sbt "run-main com.getjenny.manaus.commands.CalculateKeywordsForSentences --raw_c
 ### generate a docker container
 
 ```bash
-sbt sbt docker:publishLocal
+sbt docker:publishLocal
 ```
 
 ### publish on docker cloud
 
 ```bash
-sbt sbt docker:publish
+sbt docker:publish
 ```
 
 ### create a latest tag and publish
