@@ -16,8 +16,8 @@ libraryDependencies ++= {
     "org.scalanlp" %% "breeze-natives" % "0.13",
     "org.elasticsearch" % "elasticsearch" % ESClientVersion,
     "org.elasticsearch.client" % "transport" % ESClientVersion,
-    "org.apache.logging.log4j" % "log4j-api" % "2.8.2",
-    "org.apache.logging.log4j" % "log4j-core" % "2.8.2",
+    "org.apache.logging.log4j" % "log4j-api" % "2.9.1",
+    "org.apache.logging.log4j" % "log4j-core" % "2.9.1",
     "ch.qos.logback"    %  "logback-classic" % "1.2.3",
     "com.typesafe.scala-logging" %% "scala-logging" % "3.7.2",
     "com.github.scopt" %% "scopt" % "3.6.0"
