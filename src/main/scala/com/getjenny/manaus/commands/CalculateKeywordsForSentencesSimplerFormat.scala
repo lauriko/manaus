@@ -12,6 +12,7 @@ object CalculateKeywordsForSentencesSimplerFormat {
 
   private case class Params(
     raw_conversations: String = "data/conversations.txt",
+    separator: Char = ';',
     word_frequencies: String = "statistics_data/english/word_frequency.tsv",
     minWordsPerSentence: Int = 10,
     pruneTermsThreshold: Int = 100000,
@@ -35,9 +36,9 @@ object CalculateKeywordsForSentencesSimplerFormat {
     val active_potential = params.active_potential
     val total_info = params.total_info
 
-    println("INFO: getting sentences and observedOccurrences")
+    println("INFO: getting sentences and observedOccurrences: " + params)
     val (sentences, observedOccurrences) =
-      cmd_utils.buildObservedOccurrencesMapFromConversationsFormat2(params.raw_conversations)
+      cmd_utils.buildObservedOccurrencesMapFromConversationsFormat3(params.raw_conversations, params.separator)
 
     val bags =  cmd_utils.extractKeywords(sentences = sentences, observedOccurrences = observedOccurrences,
                   minWordsPerSentence = minWordsPerSentence,
@@ -66,12 +67,11 @@ object CalculateKeywordsForSentencesSimplerFormat {
       quote='"',
       escape='\\')
 
-    println("INFO: keywords calculation completed")
+    println("INFO: keywords calculation completed, start with Bigrams")
 
-    /*
-    val g = Bags(bags.toList)
-    println("Bigrams:\n" + g.llrSignificativeBigrams)
-    */
+    val g = Bags(bags.toList.map(x => (x._1,  x._2.map(_._1).toSet )) )
+    println("Bigrams:\n" + g.binomialSignificativeBigrams.filter(_._2 > 20).mkString("\n") )
+
   }
 
   def main(args: Array[String]) {
@@ -80,9 +80,13 @@ object CalculateKeywordsForSentencesSimplerFormat {
       head("extract the most relevant keywords from text.")
       help("help").text("prints this usage text")
       opt[String]("raw_conversations").required()
-        .text(s"the file with raw conversation, a conversation per line with interactions separated by ;" +
+        .text(s"the file with raw conversation, a conversation per line with interactions separated by --separator" +
           s"  default: ${defaultParams.raw_conversations}")
         .action((x, c) => c.copy(raw_conversations = x))
+      opt[String]("separator").required()
+        .text(s"fields' separator in raw conversation" +
+          s"  default: ${defaultParams.separator}")
+        .action((x, c) => c.copy(separator = x.charAt(0)))
       opt[String]("word_frequencies").required()
         .text(s"the file with word frequencies" +
           s"  default: ${defaultParams.word_frequencies}")
