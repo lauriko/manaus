@@ -1,36 +1,30 @@
 # Keyword Extractor
 
-Temporary project to implement a topic extractor.
+Library used by StarChat for topic extraction
 
-In a nutshell,...
-
-
-## Compile
-
-```bash
-sbt compile
-```
-
-## zip packet generation
+## Make zip
 
 ```bash
 sbt dist
 ```
 
-## run from sbt
+## Extract keywords
 
 ```bash
-sbt "run-main com.getjenny.manaus.commands.CalculateKeywordsForSentences --raw_conversations data/conversations.txt --word_frequencies statistics_data/english/word_frequency.tsv --output_file data/output.csv"
+sbt "runMain com.getjenny.manaus.commands.CalculateKeywordsForSentencesSimplerFormat \
+--raw_conversations data/conversations.txt \
+--separator , \
+--word_frequencies statistics_data/english/word_frequency.tsv \
+--output_file data/output.csv"
 ```
 
-The input format is a semicolumn separated value file with the following fields:
-```sentence, tokenized_sentence, type, conv_id, sentence_id```
+The input format is a  separator-separated value file with the following fields:
+```sentence_id SEPARATOR sentence```
 
 The output format is a semicolumn separated value file with the following fields:
-```sentence, tokenized_sentence, type, conv_id, sentence_id, keywords```
 
-```bash
-sbt "run-main com.getjenny.manaus.commands.CalculateKeywordsForSentences --raw_conversations data/conversations.txt --word_frequencies statistics_data/english/word_frequency.tsv --output_file data/output.csv
+```
+sentence_id;"keyword1|score keyword2|score .... "
 ```
 
 ## run from zip packet

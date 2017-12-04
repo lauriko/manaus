@@ -3,7 +3,7 @@ import com.typesafe.sbt.packager.docker._
 
 name := "manaus"
 
-scalaVersion := "2.12.2"
+scalaVersion := "2.12.4"
 
 resolvers ++= Seq("Typesafe Repository" at "http://repo.typesafe.com/typesafe/releases/",
   Resolver.bintrayRepo("hseeberger", "maven"))
