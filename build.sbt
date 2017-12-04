@@ -27,6 +27,10 @@ libraryDependencies ++= {
 scalacOptions += "-deprecation"
 scalacOptions += "-feature"
 
+fork in run := true
+
+javaOptions in run += "-Xmx8G"
+
 enablePlugins(GitVersioning)
 enablePlugins(GitBranchPrompt)
 enablePlugins(JavaServerAppPackaging)
@@ -54,8 +58,8 @@ dockerRepository := Some("elegansio")
 
 mappings in Universal ++= {
   directory("scripts") ++
-  directory("statistics_data") ++
-  contentOf("src/main/resources").toMap.mapValues("config/" + _).toSeq
+    directory("statistics_data") ++
+    contentOf("src/main/resources").toMap.mapValues("config/" + _).toSeq
 }
 
 // Assembly settings
