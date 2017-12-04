@@ -33,18 +33,18 @@ object CommandsUtils extends LazyLogging {
     priorOccurrences
   }
 
-  def getDataFromCSV(conversations_file: String): Stream[IndexedSeq[String]] = {
+  def getDataFromCSV(conversations_file: String, separator: Char=';'): Stream[IndexedSeq[String]] = {
     val file = new File(conversations_file)
     val file_reader = new FileReader(file)
-    val file_entries = CSVReader.read(input=file_reader, separator=';',
+    val file_entries = CSVReader.read(input=file_reader, separator=separator,
       quote='"', escape='\\', skipLines=0)
     file_entries.toStream
   }
 
-  def buildObservedOccurrencesMapFromConversationsFormat1(conversations_file: String) = {
+  def buildObservedOccurrencesMapFromConversationsFormat1(conversations_file: String, separator: Char=';') = {
     // list of tokenized sentences grouped by conversation
     // (sentence, tokenized_sentence, type, conv_id, sentence_id)
-    def sentences = getDataFromCSV(conversations_file).map(line => {
+    def sentences = getDataFromCSV(conversations_file, separator).map(line => {
       val tokenized_sentence = line(0).split(" ").toList.filter(_ != "").map(w => w.toLowerCase)
       (line(0), tokenized_sentence, line(1), line(2), line(3))
     })
@@ -60,17 +60,35 @@ object CommandsUtils extends LazyLogging {
     (sentences, observedOccurrences)
   }
 
-  def buildObservedOccurrencesMapFromConversationsFormat2(conversations_file: String) = {
-
-
+  def buildObservedOccurrencesMapFromConversationsFormat2(conversations_file: String, separator: Char=';') = {
     // list of tokenized sentences grouped by conversation
     // (sentence, tokenized_sentence, type, conv_id, sentence_id)
-    def sentences = getDataFromCSV(conversations_file).map(line => {
+    def sentences = getDataFromCSV(conversations_file, separator).map(line => {
       val tokenized_sentence = line(0).split(" ").toList.filter(_ != "").map(w => w.toLowerCase)
       (line(1), tokenized_sentence)
     })
 
     logger.info("calculating observedOcurrencesMap")
+    val observedOccurrencesMap = sentences.flatMap(line => line._2)
+      .foldLeft(Map.empty[String, Int]){
+        (count, word) => count + (word -> (count.getOrElse(word, 0) + 1))
+      }
+
+    val observedOccurrences = new ObservedTokensOccurrencesMap(observedOccurrencesMap)
+
+    (sentences, observedOccurrences)
+  }
+
+  def buildObservedOccurrencesMapFromConversationsFormat3(conversations_file: String, separator: Char) = {
+
+    // list of tokenized sentences grouped by conversation
+    // (sentence, tokenized_sentence, type, conv_id, sentence_id)
+    def sentences = getDataFromCSV(conversations_file, separator).map(line => {
+      val tokenized_sentence = line(1).replaceAll("[^A-Za-z]+", " ").split("\\s+").toList.map(w => w.toLowerCase)
+      (line(0), tokenized_sentence)
+    })
+
+    logger.info("calculating observedOcurrencesMap in Format3: file " + conversations_file + " and separator " + separator)
     val observedOccurrencesMap = sentences.flatMap(line => line._2)
       .foldLeft(Map.empty[String, Int]){
         (count, word) => count + (word -> (count.getOrElse(word, 0) + 1))
