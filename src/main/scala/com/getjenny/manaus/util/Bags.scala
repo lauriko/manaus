@@ -107,7 +107,7 @@ case class Bags(bags: List[(List[String], Set[String])]) {
     yield (b, Binomial(samples=n, successes=occurrences(b.tail.head))
       .rightSurprise(n=occurrences(b.head), k=m11(b.toSet)))).sortBy(-_._2).filterNot(_._2.isNaN)
 
-  // println(binomialSignificativeBigramsFast.filter(_._2 > 20).mkString("\n") )
+  // println(binomialSignificativeBigrams.filter(_._2 > 20).mkString("\n") )
 
   /**
     * Here we compute the surprise in a more rigorous way. Consider the bigram(A, B).
