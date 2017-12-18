@@ -88,11 +88,11 @@ object CommandsUtils extends LazyLogging {
     val client: TransportClient = elastic_client.get_client()
     val qb: MatchAllQueryBuilder = QueryBuilders.matchAllQuery()
 
-    var scrollResp: SearchResponse = client.prepareSearch(elastic_client.index_name)
-      .setScroll("2m")
+    var scrollResp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
-      .setSize(100).get() //max of 100 hits will be returned for each scroll
+      .setScroll(new TimeValue(60000))
+      .setSize(10000).get()
 
     val documents: Stream[(String, String)] = Stream.continually({
       val hits = scrollResp.getHits.getHits
@@ -127,12 +127,12 @@ object CommandsUtils extends LazyLogging {
       script_text,
       Collections.emptyMap())
 
-    var scrollResp: SearchResponse = client.prepareSearch(elastic_client.index_name)
-      .setScroll("2m")
+    var scrollResp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
       .addScriptField("analyzed_tokens", script)
-      .setSize(100).get() //max of 100 hits will be returned for each scroll
+      .setScroll(new TimeValue(60000))
+      .setSize(100).get()
 
     val documents: Stream[(List[String], String)] = Stream.continually({
       val hits = scrollResp.getHits.getHits

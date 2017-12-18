@@ -34,9 +34,9 @@ object ContinuousKeywordsUpdate extends LazyLogging {
                              total_info: Boolean = false,
                              active_potential: Boolean = true,
 
-                             type_name: String = "index_0.question",
+                             type_name: String = "question",
                              query_min_threshold: Double = 0.0,
-                             index_name: String = "jenny-en-0",
+                             index_name: String = "index_0.question",
                              field_name: String = "question.base",
                              cluster_name: String = "starchat",
                              ignore_cluster_name: Boolean = true,

@@ -13,7 +13,7 @@ object GetDatasetFromES extends LazyLogging {
     output_file: String = "",
     type_name: String = "question",
     query_min_threshold: Double = 0.0,
-    index_name: String = "jenny-en-0",
+    index_name: String = "index_0.question",
     cluster_name: String = "starchat",
     ignore_cluster_name: Boolean = true,
     index_language: String = "english",
