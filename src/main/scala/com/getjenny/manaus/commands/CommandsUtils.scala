@@ -102,7 +102,7 @@ object CommandsUtils extends LazyLogging {
       hits
     }).takeWhile(_.length != 0).flatten.map(hit => {
       val id = hit.getId
-      val source : Map[String, Any] = hit.getSource.asScala.toMap
+      val source : Map[String, Any] = hit.getSourceAsMap.asScala.toMap
       val question : String = source.get("question") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
