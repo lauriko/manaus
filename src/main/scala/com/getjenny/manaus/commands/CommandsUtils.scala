@@ -18,6 +18,8 @@ import java.util.Collections
 
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.collection.immutable.List
+
 
 object CommandsUtils extends LazyLogging {
 
@@ -79,6 +81,12 @@ object CommandsUtils extends LazyLogging {
     val observedOccurrences = new ObservedTokensOccurrencesMap(observedOccurrencesMap)
 
     (sentences, observedOccurrences)
+  }
+
+  def get_indices(elastic_client : ElasticClient): List[String] = {
+    val indices_res = elastic_client.get_client()
+      .admin.cluster.prepareState.get.getState.getMetaData.getIndices.asScala
+    indices_res.map(x => x.key).toList
   }
 
   def search(elastic_client : ElasticClient):
