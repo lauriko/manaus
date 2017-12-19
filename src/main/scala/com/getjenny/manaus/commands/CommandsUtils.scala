@@ -81,7 +81,6 @@ object CommandsUtils extends LazyLogging {
     (sentences, observedOccurrences)
   }
 
-  <<<<<<< HEAD
   def buildObservedOccurrencesMapFromConversationsFormat3(conversations_file: String, separator: Char) = {
 
     // list of tokenized sentences grouped by conversation
