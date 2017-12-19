@@ -18,10 +18,12 @@ import java.util.Collections
 
 import com.typesafe.scalalogging.LazyLogging
 
+import scala.collection.immutable.List
+
 
 object CommandsUtils extends LazyLogging {
 
- def readPriorOccurrencesMap(word_frequencies: String,
+  def readPriorOccurrencesMap(word_frequencies: String,
                               wordColumn: Int = 1, occurrenceColumn: Int = 2): TokensOccurrences = {
     val priorOccurrencesMap: Map[String, Int] = Source.fromFile(word_frequencies).getLines
       .map(line => {
@@ -79,6 +81,7 @@ object CommandsUtils extends LazyLogging {
     (sentences, observedOccurrences)
   }
 
+  <<<<<<< HEAD
   def buildObservedOccurrencesMapFromConversationsFormat3(conversations_file: String, separator: Char) = {
 
     // list of tokenized sentences grouped by conversation
@@ -99,18 +102,24 @@ object CommandsUtils extends LazyLogging {
     (sentences, observedOccurrences)
   }
 
+  def get_indices(elastic_client : ElasticClient): List[String] = {
+    val indices_res = elastic_client.get_client()
+      .admin.cluster.prepareState.get.getState.getMetaData.getIndices.asScala
+    indices_res.map(x => x.key).toList
+  }
+
   def search(elastic_client : ElasticClient):
-      Stream[(String, String)] = {
+  Stream[(String, String)] = {
 
     elastic_client.open_client()
     val client: TransportClient = elastic_client.get_client()
     val qb: MatchAllQueryBuilder = QueryBuilders.matchAllQuery()
 
-    var scrollResp: SearchResponse = client.prepareSearch(elastic_client.index_name)
-      .setScroll("2m")
+    var scrollResp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
-      .setSize(100).get() //max of 100 hits will be returned for each scroll
+      .setScroll(new TimeValue(60000))
+      .setSize(10000).get()
 
     val documents: Stream[(String, String)] = Stream.continually({
       val hits = scrollResp.getHits.getHits
@@ -120,7 +129,7 @@ object CommandsUtils extends LazyLogging {
       hits
     }).takeWhile(_.length != 0).flatten.map(hit => {
       val id = hit.getId
-      val source : Map[String, Any] = hit.getSource.asScala.toMap
+      val source : Map[String, Any] = hit.getSourceAsMap.asScala.toMap
       val question : String = source.get("question") match {
         case Some(t) => t.asInstanceOf[String]
         case None => ""
@@ -128,7 +137,7 @@ object CommandsUtils extends LazyLogging {
       (question, id)
     })
 
-   documents
+    documents
   }
 
   def searchAndGetTokens(field_name: String, elastic_client: ElasticClient): Stream[(List[String], String)] = {
@@ -145,12 +154,12 @@ object CommandsUtils extends LazyLogging {
       script_text,
       Collections.emptyMap())
 
-    var scrollResp: SearchResponse = client.prepareSearch(elastic_client.index_name)
-      .setScroll("2m")
+    var scrollResp : SearchResponse = client.prepareSearch(elastic_client.index_name)
       .setTypes(elastic_client.type_name)
       .setQuery(qb)
       .addScriptField("analyzed_tokens", script)
-      .setSize(100).get() //max of 100 hits will be returned for each scroll
+      .setScroll(new TimeValue(60000))
+      .setSize(100).get()
 
     val documents: Stream[(List[String], String)] = Stream.continually({
       val hits = scrollResp.getHits.getHits
@@ -168,7 +177,7 @@ object CommandsUtils extends LazyLogging {
       (analyzed_tokens.toList, id)
     })
 
-   documents
+    documents
   }
 
   def extractKeywords(sentences: Stream[(String, List[String])], observedOccurrences: ObservedTokensOccurrencesMap,
@@ -198,8 +207,8 @@ object CommandsUtils extends LazyLogging {
     logger.info("getting informative words for sentences")
     val informativeKeywords: Stream[(List[String], List[(String, Double)])] =
       sentences.zip(rawBagOfKeywordsInfo).map(sentence => {
-      (sentence._1._2, sentence._2)
-    })
+        (sentence._1._2, sentence._2)
+      })
 
     logger.info("calculating bags")
     // list of the final keywords

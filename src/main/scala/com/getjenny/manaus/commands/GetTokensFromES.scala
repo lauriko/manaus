@@ -11,7 +11,7 @@ object GetTokensFromES {
     output_file: String = "",
     type_name: String = "question",
     query_min_threshold: Double = 0.0,
-    index_name: String = "jenny-en-0",
+    index_name: String = "index_english_0.question",
     field_name: String = "question.base",
     cluster_name: String = "starchat",
     ignore_cluster_name: Boolean = true,
@@ -64,7 +64,7 @@ object GetTokensFromES {
         s"  default: ${defaultParams.type_name}")
         .action((x, c) => c.copy(type_name = x))
       opt[Double]("query_min_threshold")
-        .text(s"a min threshdold for search" +
+        .text(s"a min threshold for search" +
         s"  default: ${defaultParams.query_min_threshold}")
         .action((x, c) => c.copy(query_min_threshold = x))
       opt[String]("index_name")

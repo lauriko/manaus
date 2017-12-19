@@ -71,3 +71,10 @@ example: run a program
 docker run -i -t --rm --name manaus elegansio/manaus:latest manaus/bin/get-dataset-from-e-s --help
 ```
 
+### Calculating keywords for all the indexes
+
+```bash
+./manaus/bin/continuous-keywords-update-all-indexes --temp_data_folder manaus/data --host_map localhost=9300 --interval_sec 5 --word_frequencies manaus/statisti
+cs_data --cluster_name starchat 
+```
+
