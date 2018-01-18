@@ -188,6 +188,7 @@ object ContinuousKeywordsUpdateAllIndexes extends LazyLogging {
         })
         keywords_file_writer.close()
         token_data_file_writer.close()
+        elastic_client.close_client(elastic_client.client)
         // END upload data on ES
       })
 
