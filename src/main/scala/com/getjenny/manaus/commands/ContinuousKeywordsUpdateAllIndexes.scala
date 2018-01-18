@@ -186,6 +186,8 @@ object ContinuousKeywordsUpdateAllIndexes extends LazyLogging {
               logger.error("ID(" + item._1 + ") Document(" + document + ") Error(" + e.getMessage + ")")
           }
         })
+        keywords_file_writer.close()
+        token_data_file_writer.close()
         // END upload data on ES
       })
 
