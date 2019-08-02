@@ -1,12 +1,10 @@
 package com.getjenny.manaus.commands
 
+import java.io.{File, FileWriter}
+
+import breeze.io.CSVWriter
 import com.getjenny.manaus.util._
-import com.getjenny.manaus._
-import breeze.io.{CSVReader, CSVWriter}
-import java.io.{File, FileWriter, FileReader}
 import scopt.OptionParser
-import scala.io.Source
-import scala.collection.SeqView
 
 object CalculateKeywordsForSentencesSimplerFormat {
 

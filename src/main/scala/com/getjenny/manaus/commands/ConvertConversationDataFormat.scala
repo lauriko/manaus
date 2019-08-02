@@ -1,10 +1,11 @@
 package com.getjenny.manaus.commands
 
-import com.getjenny.manaus.util._
-import com.getjenny.manaus._
-import breeze.io.CSVWriter
 import java.io.{File, FileWriter}
+
+import breeze.io.CSVWriter
+import com.getjenny.manaus.util._
 import scopt.OptionParser
+
 import scala.io.Source
 
 object ConvertConversationDataFormat {
