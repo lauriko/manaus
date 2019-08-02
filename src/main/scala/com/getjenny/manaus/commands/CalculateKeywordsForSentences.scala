@@ -93,7 +93,7 @@ object CalculateKeywordsForSentences {
     val file_writer = new FileWriter(output_file)
 
     //sentence, type, conv_id, sentence_id
-    val csv_writer = CSVWriter.write(output=file_writer,
+    CSVWriter.write(output=file_writer,
       mat=out_keywords,
       separator=';',
       quote='"',

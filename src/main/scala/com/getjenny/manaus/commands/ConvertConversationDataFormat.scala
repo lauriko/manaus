@@ -23,11 +23,11 @@ object ConvertConversationDataFormat {
         split_sentences(line)
     }).zipWithIndex
 
-    val new_format_conversations = exchanges.map(exchange => {
+    val new_format_conversations = exchanges.flatMap(exchange => {
       exchange._1.map(conv => {
         IndexedSeq(conv._1._1, conv._1._2, exchange._2.toString, conv._2.toString)
       })
-    }).flatten
+    })
 
     val output_file = new File(params.output_file)
     val file_writer = new FileWriter(output_file)
@@ -35,7 +35,7 @@ object ConvertConversationDataFormat {
     val entries = new_format_conversations.toTraversable
 
     //sentence, type, conv_id, sentence_id
-    val csv_writer = CSVWriter.write(output=file_writer,
+    CSVWriter.write(output=file_writer,
       mat=entries,
       separator=';',
       quote='"',
