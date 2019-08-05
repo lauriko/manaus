@@ -127,7 +127,7 @@ object ContinuousKeywordsUpdate extends LazyLogging {
       val keywords_file_writer = new FileWriter(keywords_output_file)
 
       //sentence, type, conv_id, sentence_id
-      val keywords_csv_writer = CSVWriter.write(output = keywords_file_writer,
+      CSVWriter.write(output = keywords_file_writer,
         mat = out_keywords,
         separator = ';',
         quote = '"',

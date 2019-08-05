@@ -187,7 +187,8 @@ object CommandsUtils extends LazyLogging {
     documents
   }
 
-  def extractKeywords(sentences: Stream[(String, List[String])], observedOccurrences: ObservedTokensOccurrencesMap,
+  def extractKeywords(sentences: Stream[(String, List[String])],
+                      observedOccurrences: ObservedTokensOccurrencesMap,
                       minWordsPerSentence: Int, pruneTermsThreshold: Int, misspell_max_occurrence: Int,
                       priorOccurrences: TokensOccurrences, active_potential_decay: Int,
                       total_info: Boolean,
