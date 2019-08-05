@@ -117,7 +117,7 @@ object CommandsUtils extends LazyLogging {
       .query(qb)
       .size(10000)
 
-    val searchRequest: SearchRequest = new SearchRequest(elastic_client.indexSuffix)
+    val searchRequest: SearchRequest = new SearchRequest(elastic_client.indexName)
       .source(sourceBuilder)
       .scroll(new TimeValue(60000))
 
@@ -161,7 +161,7 @@ object CommandsUtils extends LazyLogging {
       .query(qb)
       .size(100)
 
-    val searchRequest: SearchRequest = new SearchRequest(elastic_client.indexSuffix)
+    val searchRequest: SearchRequest = new SearchRequest(elastic_client.indexName)
       .source(sourceBuilder)
       .scroll(new TimeValue(60000))
 
