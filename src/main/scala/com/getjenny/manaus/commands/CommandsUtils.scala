@@ -159,6 +159,7 @@ object CommandsUtils extends LazyLogging {
 
     val sourceBuilder: SearchSourceBuilder = new SearchSourceBuilder()
       .query(qb)
+      .scriptField("analyzed_tokens", script)
       .size(100)
 
     val searchRequest: SearchRequest = new SearchRequest(elastic_client.indexName)
