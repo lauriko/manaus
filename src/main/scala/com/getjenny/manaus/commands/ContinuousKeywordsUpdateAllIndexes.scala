@@ -40,7 +40,7 @@ object ContinuousKeywordsUpdateAllIndexes extends LazyLogging {
                              keystore_password: String = "N7WQdx20",
                              cert_format: String = "pkcs12",
                              disable_host_validation: Boolean = true,
-                             elasticsearch_authentication: String = ""
+                             elasticsearch_authentication: String = "ZWxhc3RpYzpyUmw0Q0NFUGpZZ2s5YWd3"
                            )
 
   def doContinuousKeywordsUpdate(params: Params): Unit = {
